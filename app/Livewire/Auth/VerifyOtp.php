@@ -18,7 +18,7 @@ class VerifyOtp extends Component
         $this->validate(['code' => ['required', 'digits:'.config('otp.length')]]);
 
         try {
-            if (! $authService->verifyOtp(Auth::user(), $this->code)) {
+            if (! $authService->verifyOtp(Auth::user(), $this->code, \App\Contracts\AuthServiceContract::PURPOSE_EMAIL)) {
                 $this->error = 'Invalid code. Please try again.';
                 return;
             }
@@ -26,6 +26,8 @@ class VerifyOtp extends Component
             $this->error = $e->getMessage();
             return;
         }
+
+        Auth::user()->markEmailAsVerified();
 
         return redirect()->route('newsfeed');
     }

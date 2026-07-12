@@ -27,6 +27,12 @@
             Remember me
         </label>
 
+        <div class="text-right">
+            <a href="{{ route('forgot.password') }}" class="text-sm text-blue-600 hover:underline">
+                Forgot your password?
+            </a>
+        </div>
+
         <button type="submit"
                 wire:loading.attr="disabled"
                 class="w-full bg-blue-600 text-white rounded-xl py-2 font-medium hover:bg-blue-700">

@@ -145,7 +145,7 @@ return [
 
     'features' => [
         Features::registration(),
-        Features::resetPasswords(),
+        // Features::resetPasswords(), DISABLED — we use our own OTP-based forgot/reset flow
         // Features::emailVerification(), OFF — we use our own OTP flow instead
         Features::updateProfileInformation(),
         Features::updatePasswords(),
