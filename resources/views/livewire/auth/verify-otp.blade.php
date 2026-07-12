@@ -2,6 +2,12 @@
     <h1 class="text-2xl font-semibold text-gray-900 mb-2">Verify your email</h1>
     <p class="text-gray-500 mb-6">Enter the {{ config('otp.length') }}-digit code sent to {{ auth()->user()->email }}</p>
 
+    @if (session('verify_notice'))
+        <div class="mb-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-sm p-3 text-left">
+            {{ session('verify_notice') }}
+        </div>
+    @endif
+
     @if (session('status'))
         <div class="mb-4 text-sm text-green-600">{{ session('status') }}</div>
     @endif
