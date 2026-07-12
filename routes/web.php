@@ -7,7 +7,7 @@ use App\Livewire\Auth\VerifyOtp;
 use App\Livewire\Newsfeed\Index as Newsfeed;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', Welcome::class)->name('welcome');
+Route::get('/', Welcome::class)->name('welcome')->middleware('guest');
 
 Route::middleware(['guest', 'throttle:10,1'])->group(function () {
     Route::get('/login', Login::class)->name('login');
@@ -15,7 +15,9 @@ Route::middleware(['guest', 'throttle:10,1'])->group(function () {
 });
 
 Route::middleware(['auth', 'throttle:20,1'])->group(function () {
-    Route::get('/verify-otp', VerifyOtp::class)->name('verification.notice');
+    Route::get('/verify-otp', VerifyOtp::class)
+        ->name('verification.notice')
+        ->middleware('unverified');
 
     Route::middleware('verified')->group(function () {
         Route::get('/newsfeed', Newsfeed::class)->name('newsfeed');

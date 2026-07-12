@@ -15,6 +15,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        \Illuminate\Auth\Middleware\RedirectIfAuthenticated::redirectUsing(
+            fn (\Illuminate\Http\Request $request) =>
+                $request->user()?->hasVerifiedEmail()
+                    ? route('newsfeed')
+                    : route('verification.notice')
+        );
     }
 }
