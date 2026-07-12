@@ -1,6 +1,12 @@
 <div class="max-w-md mx-auto bg-white rounded-xl shadow-sm p-8">
     <h1 class="text-2xl font-semibold text-gray-900 mb-6">Welcome back</h1>
 
+    @if ($loginError)
+        <div class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3">
+            {!! nl2br(e($loginError)) !!}
+        </div>
+    @endif
+
     <form wire:submit="login" class="space-y-4">
         <div>
             <label class="block text-sm font-medium text-gray-700">Email</label>

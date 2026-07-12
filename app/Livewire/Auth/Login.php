@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Auth;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -14,9 +15,12 @@ class Login extends Component
     public string $email = '';
     public string $password = '';
     public bool $remember = false;
+    public ?string $loginError = null;
 
     public function login()
     {
+        $this->loginError = null;
+
         $this->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -24,15 +28,17 @@ class Login extends Component
 
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt(
+        $user = User::where('email', $this->email)->first();
+
+        if (! $user || ! Auth::attempt(
             ['email' => $this->email, 'password' => $this->password],
             $this->remember
         )) {
             RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'email' => 'These credentials do not match our records.',
-            ]);
+            $this->loginError = "Invalid email or password\nPlease check your credentials and try again.";
+
+            return;
         }
 
         RateLimiter::clear($this->throttleKey());
