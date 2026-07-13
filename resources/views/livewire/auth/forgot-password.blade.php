@@ -7,9 +7,8 @@
 
     @if ($sent)
         <a href="{{ route('reset.password') }}"
-           class="group mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30">
+           class="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30">
             Enter reset code
-            <x-icon name="arrow-right" class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" stroke-width="2" />
         </a>
     @else
         <form wire:submit="send" class="mt-8 space-y-5">
@@ -30,7 +29,6 @@
                     class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
                 <span wire:loading.remove class="flex items-center gap-2">
                     Send reset code
-                    <x-icon name="arrow-right" class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" stroke-width="2" />
                 </span>
                 <span wire:loading class="opacity-80">Sending reset code…</span>
             </button>
@@ -41,7 +39,6 @@
 
     <p class="text-center text-sm text-gray-500">
         <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 font-medium text-gray-500 transition hover:text-brand">
-            <x-icon name="arrow-left" class="h-4 w-4" stroke-width="2" />
             Back to login
         </a>
     </p>

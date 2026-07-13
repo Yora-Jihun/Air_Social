@@ -151,22 +151,20 @@
             </div>
 
             {{-- PRIMARY BUTTON --}}
-            <button type="submit" wire:loading.attr="disabled"
-                    @click="if (password.length && passwordConfirmation.length && password !== passwordConfirmation) { $event.preventDefault(); $store.toast.show('The passwords do not match.', 'error'); }"
-                    class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
-                <span wire:loading.remove class="flex items-center gap-2">
-                    Reset Password
-                <x-icon name="arrow-right" class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" stroke-width="2" />
-                </span>
-                <span wire:loading class="opacity-80">Resetting password…</span>
-            </button>
+        <button type="submit" wire:loading.attr="disabled" wire:target="resetPassword"
+                @click="if (password.length && passwordConfirmation.length && password !== passwordConfirmation) { $event.preventDefault(); $store.toast.show('The passwords do not match.', 'error'); }"
+                class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
+            <span wire:loading.remove wire:target="resetPassword" class="flex items-center gap-2">
+                Reset Password
+            </span>
+            <span wire:loading wire:target="resetPassword" class="opacity-80">Resetting password…</span>
+        </button>
         </form>
 
         <div class="my-6 h-px bg-gray-100"></div>
 
         <p class="text-center text-sm text-gray-500">
             <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 font-medium text-gray-500 transition hover:text-brand">
-                <x-icon name="arrow-left" class="h-4 w-4" stroke-width="2" />
                 Back to Sign In
             </a>
         </p>
