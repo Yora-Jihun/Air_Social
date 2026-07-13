@@ -1,4 +1,4 @@
-@props(['name'])
+@props(['name', 'fill' => 'none'])
 
 @php
     $body = config("icons.{$name}");
@@ -7,7 +7,7 @@
 @if ($body)
 <svg xmlns="http://www.w3.org/2000/svg" {{ $attributes->merge([
     'viewBox' => '0 0 24 24',
-    'fill' => 'none',
+    'fill' => $fill,
     'stroke' => 'currentColor',
     'stroke-width' => '1.8',
 ]) }}>
