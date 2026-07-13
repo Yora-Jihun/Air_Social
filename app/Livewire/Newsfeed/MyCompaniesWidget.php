@@ -19,8 +19,8 @@ class MyCompaniesWidget extends Component
         //     ->map(fn ($c) => ['name' => $c->name, 'role' => $c->pivot->role, 'avatar' => $c->avatar_url])
         //     ->toArray();
         $this->companies = [
-            ['name' => 'Northwind Co.', 'role' => 'Admin', 'avatar' => null],
-            ['name' => 'Acme Labs', 'role' => 'Employee', 'avatar' => null],
+            ['name' => 'BDO Unibank', 'role' => 'Admin', 'avatar' => null],
+            ['name' => 'BPI', 'role' => 'Employee', 'avatar' => null],
         ];
     }
 

@@ -20,9 +20,9 @@ class PeopleYouMayKnowWidget extends Component
         //     ->get(['id', 'name', 'title'])
         //     ->toArray();
         $this->people = [
-            ['name' => 'Liam Chen', 'role' => 'Designer at Pixel & Co.', 'avatar' => null],
-            ['name' => 'Sofia Rossi', 'role' => 'Engineer at Brightwave', 'avatar' => null],
-            ['name' => 'Marcus Lee', 'role' => 'PM at Northwind Co.', 'avatar' => null],
+            ['name' => 'Gabriel Tan', 'role' => 'Teller at BDO Unibank', 'avatar' => null],
+            ['name' => 'Sofia Aguinaldo', 'role' => 'Engineer at UnionBank', 'avatar' => null],
+            ['name' => 'Marco Delos Reyes', 'role' => 'PM at Metrobank', 'avatar' => null],
         ];
     }
 

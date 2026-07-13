@@ -19,10 +19,10 @@ class TrendingCompaniesWidget extends Component
         //     ->get(['name', 'members_count', 'avatar_url'])
         //     ->toArray();
         $this->companies = [
-            ['name' => 'Northwind Co.', 'members' => 1280, 'avatar' => null],
-            ['name' => 'Brightwave', 'members' => 940, 'avatar' => null],
-            ['name' => 'Pixel & Co.', 'members' => 712, 'avatar' => null],
-            ['name' => 'Acme Labs', 'members' => 503, 'avatar' => null],
+            ['name' => 'BDO Unibank', 'members' => 1280, 'avatar' => null],
+            ['name' => 'Metrobank', 'members' => 940, 'avatar' => null],
+            ['name' => 'BPI', 'members' => 712, 'avatar' => null],
+            ['name' => 'UnionBank', 'members' => 503, 'avatar' => null],
         ];
     }
 
