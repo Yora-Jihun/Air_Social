@@ -85,15 +85,15 @@
 
                         <ul class="mt-8 space-y-4 text-white/90">
                             <li class="flex items-start gap-3">
-                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20 text-sm">✓</span>
+                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"><x-icon name="users" class="h-5 w-5" /></span>
                                 <span>One shared workspace for your whole company</span>
                             </li>
                             <li class="flex items-start gap-3">
-                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20 text-sm">✓</span>
+                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"><x-icon name="shield-check" class="h-5 w-5" /></span>
                                 <span>Role-based access, department by department</span>
                             </li>
                             <li class="flex items-start gap-3">
-                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20 text-sm">✓</span>
+                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"><x-icon name="blocks" class="h-5 w-5" /></span>
                                 <span>Install the plugins your team needs, from attendance and payroll to HR and more</span>
                             </li>
                         </ul>
