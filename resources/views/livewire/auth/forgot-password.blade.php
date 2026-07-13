@@ -6,10 +6,6 @@
     </div>
 
     @if ($sent)
-        <div class="mt-8 rounded-xl bg-green-50 px-4 py-4 text-sm text-green-700 ring-1 ring-green-100">
-            If an account exists for <strong>{{ $email }}</strong>, we've sent a reset code to your inbox.
-        </div>
-
         <a href="{{ route('reset.password') }}"
            class="group mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30">
             Enter reset code
@@ -18,12 +14,6 @@
             </svg>
         </a>
     @else
-        @if ($error)
-            <div class="mt-8 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
-                {{ $error }}
-            </div>
-        @endif
-
         <form wire:submit="send" class="mt-8 space-y-5">
             <div>
                 <label for="email" class="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
@@ -48,13 +38,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
                     </svg>
                 </span>
-                <span wire:loading class="flex items-center gap-2">
-                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
-                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                    </svg>
-                    Sending...
-                </span>
+                <span wire:loading class="opacity-80">Sending reset code…</span>
             </button>
         </form>
     @endif

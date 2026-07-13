@@ -12,4 +12,6 @@ interface AuthServiceContract
     public function sendOtp(User $user, string $purpose = self::PURPOSE_EMAIL): void;
 
     public function verifyOtp(User $user, string $code, string $purpose = self::PURPOSE_EMAIL): bool;
+
+    public function resendRemainingSeconds(User $user, string $purpose = self::PURPOSE_EMAIL): int;
 }

@@ -26,12 +26,14 @@ class ForgotPassword extends Component
                 $authService->sendOtp($user, AuthServiceContract::PURPOSE_PASSWORD);
             } catch (OtpResendThrottledException $e) {
                 $this->error = $e->getMessage();
+                $this->dispatch('toast', message: $this->error, type: 'error');
                 return;
             }
         }
 
         session(['otp_reset_email' => $this->email]);
         $this->sent = true;
+        $this->dispatch('toast', message: 'If that email exists, a reset code is on its way.', type: 'success');
     }
 
     public function render()

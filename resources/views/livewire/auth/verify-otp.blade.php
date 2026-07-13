@@ -1,4 +1,4 @@
-<div x-data="resetPasswordForm(@if($errors->has('code')) true @else false @endif)" x-cloak
+<div x-data="resetPasswordForm(@if($errors->has('code')) true @else false @endif, {{ $resendCooldown }})" x-cloak
      class="w-full animate-auth-fade-in rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_30px_-12px_rgba(2,6,23,0.08)] ring-1 ring-black/[0.02] sm:p-8">
     <div class="text-center">
         <img src="{{ asset('images/logo.png') }}" alt="Air Social" class="mx-auto h-12 w-12 object-contain">
@@ -10,21 +10,7 @@
     </div>
 
     @if (session('verify_notice'))
-        <div class="mt-6 rounded-xl bg-blue-50 px-4 py-3 text-left text-sm text-blue-800 ring-1 ring-blue-100">
-            {{ session('verify_notice') }}
-        </div>
-    @endif
-
-    @if (session('status'))
-        <div class="mt-6 rounded-xl bg-green-50 px-4 py-3 text-left text-sm text-green-700 ring-1 ring-green-100">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    @if ($error)
-        <div class="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
-            {{ $error }}
-        </div>
+        <div x-cloak x-init="$store.toast.show(@json(session('verify_notice')), 'info')"></div>
     @endif
 
     <form wire:submit="verify" class="mt-8 space-y-6" novalidate>
@@ -59,9 +45,10 @@
                     </span>
                 </template>
                 <template x-if="resendReady">
-                    <button type="button" @click="onResend()"
-                            class="font-medium text-brand transition hover:text-brand-dark hover:underline focus:outline-none">
-                        Resend Code
+                    <button type="button" @click="onResend()" wire:loading.attr="disabled" wire:target="resend"
+                            class="inline-flex items-center gap-2 font-medium text-brand transition hover:text-brand-dark hover:underline focus:outline-none disabled:opacity-70">
+                        <span wire:loading.remove wire:target="resend">Resend Code</span>
+                        <span wire:loading wire:target="resend" class="opacity-80">Sending code…</span>
                     </button>
                 </template>
             </div>
@@ -75,13 +62,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
                 </svg>
             </span>
-            <span wire:loading class="flex items-center gap-2">
-                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                </svg>
-                Verifying...
-            </span>
+            <span wire:loading class="opacity-80">Verifying code…</span>
         </button>
     </form>
 

@@ -65,6 +65,11 @@ class AuthService implements AuthServiceContract
         return true;
     }
 
+    public function resendRemainingSeconds(User $user, string $purpose = self::PURPOSE_EMAIL): int
+    {
+        return RateLimiter::availableIn($this->resendKey($user, $purpose));
+    }
+
     protected function codeKey(User $user, string $purpose): string
     {
         return "otp:code:{$purpose}:{$user->id}";

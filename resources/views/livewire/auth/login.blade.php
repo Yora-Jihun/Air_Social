@@ -1,15 +1,9 @@
-<div class="w-full animate-auth-fade-in rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_30px_-12px_rgba(2,6,23,0.08)] ring-1 ring-black/[0.02] sm:p-8">
+<div x-data="loginForm()" class="w-full animate-auth-fade-in rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_30px_-12px_rgba(2,6,23,0.08)] ring-1 ring-black/[0.02] sm:p-8">
     <div class="text-center">
         <img src="{{ asset('images/logo.png') }}" alt="Air Social" class="mx-auto h-12 w-12 object-contain">
         <h1 class="mt-4 text-2xl font-bold tracking-tight text-[#0F172A]">Welcome back</h1>
         <p class="mx-auto mt-2 max-w-sm text-sm text-gray-500">Sign in to continue to Air Social.</p>
     </div>
-
-    @if ($loginError)
-        <div class="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
-            {!! nl2br(e($loginError)) !!}
-        </div>
-    @endif
 
     <form wire:submit="login" class="mt-8 space-y-5">
         <div>
@@ -66,7 +60,7 @@
             </a>
         </div>
 
-        <button type="submit" wire:loading.attr="disabled"
+        <button type="submit" wire:loading.attr="disabled" :disabled="throttled"
                 class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
             <span wire:loading.remove class="flex items-center gap-2">
                 Log in
@@ -74,14 +68,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
                 </svg>
             </span>
-            <span wire:loading class="flex items-center gap-2">
-                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                </svg>
-                Signing in...
-            </span>
+            <span wire:loading class="opacity-80">Logging in…</span>
         </button>
+
+        <template x-if="throttled">
+            <p class="mt-4 text-center text-sm font-medium text-red-600">
+                Too many login attempts. Please try again in <span x-text="cooldown"></span>s.
+            </p>
+        </template>
     </form>
 
     <div class="my-6 h-px bg-gray-100"></div>

@@ -1,4 +1,4 @@
-<div x-data="resetPasswordForm(@if($errors->has('code')) true @else false @endif)" x-cloak
+<div x-data="resetPasswordForm(@if($errors->has('code')) true @else false @endif, {{ $resendCooldown }})" x-cloak
      class="w-full animate-auth-fade-in rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-[0_8px_30px_-12px_rgba(2,6,23,0.08)] ring-1 ring-black/[0.02] sm:p-8">
 
     {{-- ===================== SUCCESS STATE ===================== --}}
@@ -32,12 +32,6 @@
                 Enter the code below and choose a new password.
             </p>
         </div>
-
-        @if ($error)
-            <div class="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
-                {{ $error }}
-            </div>
-        @endif
 
         <form wire:submit="resetPassword" class="mt-8 space-y-6" novalidate>
             {{-- OTP SECTION --}}
@@ -73,9 +67,10 @@
                         </span>
                     </template>
                     <template x-if="resendReady">
-                        <button type="button" @click="onResend()"
-                                class="font-medium text-brand transition hover:text-brand-dark hover:underline focus:outline-none">
-                            Resend Code
+                        <button type="button" @click="onResend()" wire:loading.attr="disabled" wire:target="resend"
+                                class="inline-flex items-center gap-2 font-medium text-brand transition hover:text-brand-dark hover:underline focus:outline-none disabled:opacity-70">
+                            <span wire:loading.remove wire:target="resend">Resend Code</span>
+                            <span wire:loading wire:target="resend" class="opacity-80">Sending code…</span>
                         </button>
                     </template>
                 </div>
@@ -173,13 +168,11 @@
                         </template>
                     </button>
                 </div>
-                <template x-if="passwordConfirmation.length && password.length && password !== passwordConfirmation">
-                    <p class="mt-1.5 text-sm text-red-600">The passwords do not match.</p>
-                </template>
             </div>
 
             {{-- PRIMARY BUTTON --}}
             <button type="submit" wire:loading.attr="disabled"
+                    @click="if (password.length && passwordConfirmation.length && password !== passwordConfirmation) { $event.preventDefault(); $store.toast.show('The passwords do not match.', 'error'); }"
                     class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
                 <span wire:loading.remove class="flex items-center gap-2">
                     Reset Password
@@ -187,13 +180,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
                     </svg>
                 </span>
-                <span wire:loading class="flex items-center gap-2">
-                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
-                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                    </svg>
-                    Resetting...
-                </span>
+                <span wire:loading class="opacity-80">Resetting password…</span>
             </button>
         </form>
 

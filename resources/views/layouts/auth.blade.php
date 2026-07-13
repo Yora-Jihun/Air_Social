@@ -6,8 +6,57 @@
     <title>Air Social — Sign in</title>
     @vite('resources/css/app.css')
     @livewireStyles
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('toast', {
+                visible: false,
+                message: '',
+                type: 'success',
+                timer: null,
+                show(message, type = 'success') {
+                    this.message = message;
+                    this.type = type;
+                    this.visible = true;
+                    clearTimeout(this.timer);
+                    this.timer = setTimeout(() => this.hide(), 4000);
+                },
+                hide() {
+                    this.visible = false;
+                },
+            });
+        });
+    </script>
     </head>
     <body class="bg-white font-sans text-gray-900 antialiased">
+
+        <!-- Dynamic Island toast -->
+        <div x-data x-cloak
+             @toast.window="$store.toast.show($event.detail.message, $event.detail.type)"
+             class="pointer-events-none fixed inset-x-0 top-4 z-[100] flex justify-center px-4">
+            <div x-show="$store.toast.visible"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 -translate-y-5 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave-end="opacity-0 -translate-y-5 scale-95"
+                 class="pointer-events-auto flex items-center gap-2.5 rounded-full bg-[#0F172A] py-2.5 pl-3 pr-2.5 text-sm font-medium text-white shadow-2xl ring-1 ring-white/10">
+                <span x-show="$store.toast.type === 'success'" class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-green-500/20 text-green-400">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                </span>
+                <span x-show="$store.toast.type === 'error'" class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-500/20 text-red-400">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </span>
+                <span x-show="$store.toast.type === 'info'" class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-blue-500/20 text-blue-400">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                </span>
+                <span x-text="$store.toast.message" class="whitespace-pre-line pr-1"></span>
+                <button type="button" @click="$store.toast.hide()" class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white focus:outline-none">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
         <div class="min-h-screen lg:grid lg:grid-cols-2">
             <!-- Brand / marketing panel -->
             <aside class="relative hidden overflow-hidden bg-gradient-to-br from-brand to-brand-dark text-white lg:flex lg:flex-col">
@@ -72,14 +121,15 @@
     @livewireScripts
 
     <script>
-        function resetPasswordForm(initialCodeError = false) {
+        function resetPasswordForm(initialCodeError = false, initialCooldown = null) {
+            const cooldownSeconds = {{ config('otp.resend_cooldown_seconds') }};
             return {
                 showPassword: false,
                 showConfirm: false,
                 otpError: false,
                 initialCodeError: initialCodeError,
-                cooldownInitial: {{ config('otp.resend_cooldown_seconds') }},
-                cooldown: {{ config('otp.resend_cooldown_seconds') }},
+                cooldownInitial: initialCooldown ?? cooldownSeconds,
+                cooldown: initialCooldown ?? cooldownSeconds,
                 resendReady: false,
                 timer: null,
 
@@ -127,11 +177,11 @@
                             setTimeout(() => this.otpError = false, 450);
                         }
                     });
-                    this.startCooldown();
+                    this.startCooldown(this.cooldownInitial);
                 },
-                startCooldown() {
+                startCooldown(seconds) {
                     this.resendReady = false;
-                    this.cooldown = this.cooldownInitial;
+                    this.cooldown = seconds;
                     clearInterval(this.timer);
                     this.timer = setInterval(() => {
                         if (this.cooldown > 0) this.cooldown--;
@@ -147,8 +197,35 @@
                     return m + ':' + sec;
                 },
                 onResend() {
-                    this.$wire.resend();
-                    this.startCooldown();
+                    this.$wire.resend().then(() => {
+                        this.startCooldown(this.$wire.resendCooldown ?? cooldownSeconds);
+                    });
+                },
+            };
+        }
+
+        function loginForm() {
+            return {
+                cooldown: 0,
+                timer: null,
+                init() {
+                    this.cooldown = this.$wire.loginCooldown || 0;
+                    if (this.cooldown > 0) this.startTimer();
+                    this.$watch('$wire.loginCooldown', value => {
+                        this.cooldown = value || 0;
+                        this.startTimer();
+                    });
+                },
+                startTimer() {
+                    clearInterval(this.timer);
+                    if (this.cooldown <= 0) return;
+                    this.timer = setInterval(() => {
+                        if (this.cooldown > 0) this.cooldown--;
+                        if (this.cooldown <= 0) clearInterval(this.timer);
+                    }, 1000);
+                },
+                get throttled() {
+                    return this.cooldown > 0;
                 },
             };
         }

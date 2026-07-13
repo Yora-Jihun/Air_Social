@@ -13,10 +13,16 @@ class VerifyOtp extends Component
     public string $code = '';
     public array $digits = [];
     public ?string $error = null;
+    public ?string $status = null;
+    public int $resendCooldown = 0;
 
-    public function mount()
+    public function mount(AuthServiceContract $authService)
     {
         $this->digits = array_fill(0, config('otp.length'), '');
+        $this->resendCooldown = $authService->resendRemainingSeconds(
+            Auth::user(),
+            AuthServiceContract::PURPOSE_EMAIL
+        );
     }
 
     public function updatedDigits()
@@ -26,15 +32,20 @@ class VerifyOtp extends Component
 
     public function verify(AuthServiceContract $authService)
     {
+        $this->error = null;
+        $this->status = null;
+
         $this->validate(['code' => ['required', 'digits:'.config('otp.length')]]);
 
         try {
-            if (! $authService->verifyOtp(Auth::user(), $this->code, \App\Contracts\AuthServiceContract::PURPOSE_EMAIL)) {
+            if (! $authService->verifyOtp(Auth::user(), $this->code, AuthServiceContract::PURPOSE_EMAIL)) {
                 $this->error = 'Invalid code. Please try again.';
+                $this->dispatch('toast', message: $this->error, type: 'error');
                 return;
             }
         } catch (TooManyOtpAttemptsException $e) {
             $this->error = $e->getMessage();
+            $this->dispatch('toast', message: $this->error, type: 'error');
             return;
         }
 
@@ -45,12 +56,22 @@ class VerifyOtp extends Component
 
     public function resend(AuthServiceContract $authService)
     {
+        $this->error = null;
+        $this->status = null;
+
         try {
             $authService->sendOtp(Auth::user());
-            session()->flash('status', 'A new code has been sent to your email.');
+            $this->status = 'A new code has been sent to your email.';
+            $this->dispatch('toast', message: $this->status, type: 'success');
         } catch (OtpResendThrottledException $e) {
             $this->error = $e->getMessage();
+            $this->dispatch('toast', message: $this->error, type: 'error');
         }
+
+        $this->resendCooldown = $authService->resendRemainingSeconds(
+            Auth::user(),
+            AuthServiceContract::PURPOSE_EMAIL
+        );
     }
 
     public function render()

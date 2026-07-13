@@ -17,14 +17,20 @@ class ResetPassword extends Component
     public string $password_confirmation = '';
     public ?string $error = null;
     public bool $success = false;
+    public int $resendCooldown = 0;
 
-    public function mount()
+    public function mount(AuthServiceContract $authService)
     {
         if (! session('otp_reset_email')) {
             return redirect()->route('forgot.password');
         }
 
         $this->digits = array_fill(0, config('otp.length'), '');
+
+        $user = User::where('email', session('otp_reset_email'))->first();
+        $this->resendCooldown = $user
+            ? $authService->resendRemainingSeconds($user, AuthServiceContract::PURPOSE_PASSWORD)
+            : 0;
     }
 
     public function updatedDigits()
@@ -52,10 +58,12 @@ class ResetPassword extends Component
         try {
             if (! $authService->verifyOtp($user, $this->code, AuthServiceContract::PURPOSE_PASSWORD)) {
                 $this->error = 'Invalid code. Please try again.';
+                $this->dispatch('toast', message: $this->error, type: 'error');
                 return;
             }
         } catch (TooManyOtpAttemptsException $e) {
             $this->error = $e->getMessage();
+            $this->dispatch('toast', message: $this->error, type: 'error');
             return;
         }
 
@@ -67,10 +75,13 @@ class ResetPassword extends Component
         session()->forget('otp_reset_email');
 
         $this->success = true;
+        $this->dispatch('toast', message: 'Password updated successfully.', type: 'success');
     }
 
     public function resend(AuthServiceContract $authService)
     {
+        $this->error = null;
+
         $email = session('otp_reset_email');
         $user = $email ? User::where('email', $email)->first() : null;
 
@@ -82,7 +93,10 @@ class ResetPassword extends Component
             $authService->sendOtp($user, AuthServiceContract::PURPOSE_PASSWORD);
         } catch (OtpResendThrottledException $e) {
             $this->error = $e->getMessage();
+            $this->dispatch('toast', message: $this->error, type: 'error');
         }
+
+        $this->resendCooldown = $authService->resendRemainingSeconds($user, AuthServiceContract::PURPOSE_PASSWORD);
     }
 
     public function render()
