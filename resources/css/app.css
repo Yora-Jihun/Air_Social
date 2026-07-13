@@ -9,3 +9,35 @@
     --color-brand: #1877f2;
     --color-brand-dark: #166fe5;
 }
+
+[x-cloak] {
+    display: none !important;
+}
+
+@keyframes auth-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+@keyframes auth-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes auth-scale-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.animate-auth-shake {
+    animation: auth-shake 0.4s ease-in-out;
+}
+
+.animate-auth-fade-in {
+    animation: auth-fade-in 0.5s ease-out both;
+}
+
+.animate-auth-scale-in {
+    animation: auth-scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

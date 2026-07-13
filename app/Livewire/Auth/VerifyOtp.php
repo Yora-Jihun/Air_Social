@@ -11,7 +11,18 @@ use Livewire\Component;
 class VerifyOtp extends Component
 {
     public string $code = '';
+    public array $digits = [];
     public ?string $error = null;
+
+    public function mount()
+    {
+        $this->digits = array_fill(0, config('otp.length'), '');
+    }
+
+    public function updatedDigits()
+    {
+        $this->code = implode('', array_map('strval', $this->digits));
+    }
 
     public function verify(AuthServiceContract $authService)
     {

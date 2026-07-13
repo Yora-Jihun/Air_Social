@@ -3,6 +3,7 @@
 namespace App\Livewire\Auth;
 
 use App\Contracts\AuthServiceContract;
+use App\Exceptions\OtpResendThrottledException;
 use App\Exceptions\TooManyOtpAttemptsException;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -11,15 +12,24 @@ use Livewire\Component;
 class ResetPassword extends Component
 {
     public string $code = '';
+    public array $digits = [];
     public string $password = '';
     public string $password_confirmation = '';
     public ?string $error = null;
+    public bool $success = false;
 
     public function mount()
     {
         if (! session('otp_reset_email')) {
             return redirect()->route('forgot.password');
         }
+
+        $this->digits = array_fill(0, config('otp.length'), '');
+    }
+
+    public function updatedDigits()
+    {
+        $this->code = implode('', array_map('strval', $this->digits));
     }
 
     public function resetPassword(AuthServiceContract $authService)
@@ -56,9 +66,23 @@ class ResetPassword extends Component
 
         session()->forget('otp_reset_email');
 
-        session()->flash('status', 'Your password has been reset. You can now log in.');
+        $this->success = true;
+    }
 
-        return redirect()->route('login');
+    public function resend(AuthServiceContract $authService)
+    {
+        $email = session('otp_reset_email');
+        $user = $email ? User::where('email', $email)->first() : null;
+
+        if (! $user) {
+            return;
+        }
+
+        try {
+            $authService->sendOtp($user, AuthServiceContract::PURPOSE_PASSWORD);
+        } catch (OtpResendThrottledException $e) {
+            $this->error = $e->getMessage();
+        }
     }
 
     public function render()
