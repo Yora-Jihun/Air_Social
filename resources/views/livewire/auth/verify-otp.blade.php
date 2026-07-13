@@ -36,9 +36,7 @@
             @error('code') <p class="mt-3 text-center text-sm text-red-600">{{ $message }}</p> @enderror
 
             <div class="mt-5 flex items-center justify-center gap-2 text-sm text-gray-500">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
-                </svg>
+                <x-icon name="clock" class="h-4 w-4" />
                 <template x-if="!resendReady">
                     <span>Didn't receive the code?
                         <span class="font-medium text-brand" x-text="'Resend in ' + formatTime(cooldown)"></span>
@@ -58,9 +56,7 @@
                 class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
             <span wire:loading.remove class="flex items-center gap-2">
                 Verify email
-                <svg class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
-                </svg>
+                <x-icon name="arrow-right" class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" stroke-width="2" />
             </span>
             <span wire:loading class="opacity-80">Verifying code…</span>
         </button>
@@ -70,9 +66,7 @@
 
     <p class="text-center text-sm text-gray-500">
         <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 font-medium text-gray-500 transition hover:text-brand">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
-            </svg>
+                <x-icon name="arrow-left" class="h-4 w-4" stroke-width="2" />
             Back to Sign In
         </a>
     </p>

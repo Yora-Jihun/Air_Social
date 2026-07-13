@@ -4,9 +4,7 @@
     {{-- ===================== SUCCESS STATE ===================== --}}
     <div x-show="$wire.success" x-cloak class="animate-auth-scale-in text-center">
         <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600">
-            <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-            </svg>
+            <x-icon name="check" class="h-7 w-7" />
         </div>
         <h1 class="mt-6 text-2xl font-bold tracking-tight text-[#0F172A]">Password Updated</h1>
         <p class="mt-2 text-sm text-gray-500">Your password has been successfully updated.</p>
@@ -21,9 +19,7 @@
         <!-- Header -->
         <div class="text-center">
             <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand/10 text-brand">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V7.5a4.5 4.5 0 1 0-9 0v3m-1.5 0h12a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4.5 18v-6A1.5 1.5 0 0 1 6 10.5Z"/>
-                </svg>
+                    <x-icon name="lock" class="h-5 w-5" />
             </div>
         <h1 class="mt-4 text-2xl font-bold tracking-tight text-[#0F172A]">Reset your password</h1>
         <p class="mx-auto mt-2 max-w-sm text-sm text-gray-500">
@@ -58,9 +54,7 @@
 
                 {{-- RESEND AREA --}}
                 <div class="mt-5 flex items-center justify-center gap-2 text-sm text-gray-500">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
-                    </svg>
+                    <x-icon name="clock" class="h-4 w-4" />
                     <template x-if="!resendReady">
                         <span>Didn't receive the code?
                             <span class="font-medium text-brand" x-text="'Resend in ' + formatTime(cooldown)"></span>
@@ -83,9 +77,7 @@
                 <label for="password" class="mb-1.5 block text-sm font-medium text-gray-700">New password</label>
                 <div class="relative">
                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V7.5a4.5 4.5 0 1 0-9 0v3m-1.5 0h12a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4.5 18v-6A1.5 1.5 0 0 1 6 10.5Z"/>
-                        </svg>
+                        <x-icon name="lock" class="h-5 w-5" />
                     </span>
                     <input id="password" type="password" x-bind:type="showPassword ? 'text' : 'password'" wire:model="password" autocomplete="new-password"
                            placeholder="Enter your new password"
@@ -93,15 +85,10 @@
                     <button type="button" @click="showPassword = !showPassword" aria-label="Toggle password visibility"
                             class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition hover:text-gray-600 focus:outline-none">
                         <template x-if="!showPassword">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12Z"/>
-                                <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                            <x-icon name="eye" class="h-5 w-5" />
                         </template>
                         <template x-if="showPassword">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.22A10.6 10.6 0 0 0 2.25 12s3.75 7.5 9.75 7.5c1.9 0 3.66-.54 5.13-1.46M6.3 6.3A10.6 10.6 0 0 1 12 4.5c6 0 9.75 7.5 9.75 7.5a10.6 10.6 0 0 1-2.13 3.02M3 3l18 18"/>
-                            </svg>
+                            <x-icon name="eye-off" class="h-5 w-5" />
                         </template>
                     </button>
                 </div>
@@ -122,20 +109,20 @@
 
                 {{-- REQUIREMENTS --}}
                 <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div class="flex items-center gap-1.5" x-bind:class="reqLength ? 'text-green-600' : 'text-gray-400'">
-                        <svg class="h-4 w-4 shrink-0" :class="reqLength ? 'opacity-100' : 'opacity-40'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <div class="flex items-center gap-1.5" x-bindx-bind:class="reqLength ? 'text-green-600' : 'text-gray-400'">
+                        <x-icon name="check" class="h-4 w-4 shrink-0" x-bind:class="reqLength ? 'opacity-100' : 'opacity-40'" stroke-width="2.2" />
                         At least 8 characters
                     </div>
-                    <div class="flex items-center gap-1.5" x-bind:class="reqUpper ? 'text-green-600' : 'text-gray-400'">
-                        <svg class="h-4 w-4 shrink-0" :class="reqUpper ? 'opacity-100' : 'opacity-40'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <div class="flex items-center gap-1.5" x-bindx-bind:class="reqUpper ? 'text-green-600' : 'text-gray-400'">
+                        <x-icon name="check" class="h-4 w-4 shrink-0" x-bind:class="reqUpper ? 'opacity-100' : 'opacity-40'" stroke-width="2.2" />
                         One uppercase letter
                     </div>
-                    <div class="flex items-center gap-1.5" x-bind:class="reqNumber ? 'text-green-600' : 'text-gray-400'">
-                        <svg class="h-4 w-4 shrink-0" :class="reqNumber ? 'opacity-100' : 'opacity-40'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <div class="flex items-center gap-1.5" x-bindx-bind:class="reqNumber ? 'text-green-600' : 'text-gray-400'">
+                        <x-icon name="check" class="h-4 w-4 shrink-0" x-bind:class="reqNumber ? 'opacity-100' : 'opacity-40'" stroke-width="2.2" />
                         One number
                     </div>
-                    <div class="flex items-center gap-1.5" x-bind:class="reqSpecial ? 'text-green-600' : 'text-gray-400'">
-                        <svg class="h-4 w-4 shrink-0" :class="reqSpecial ? 'opacity-100' : 'opacity-40'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <div class="flex items-center gap-1.5" x-bindx-bind:class="reqSpecial ? 'text-green-600' : 'text-gray-400'">
+                        <x-icon name="check" class="h-4 w-4 shrink-0" x-bind:class="reqSpecial ? 'opacity-100' : 'opacity-40'" stroke-width="2.2" />
                         One special character
                     </div>
                 </div>
@@ -146,9 +133,7 @@
                 <label for="password_confirmation" class="mb-1.5 block text-sm font-medium text-gray-700">Confirm password</label>
                 <div class="relative">
                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V7.5a4.5 4.5 0 1 0-9 0v3m-1.5 0h12a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4.5 18v-6A1.5 1.5 0 0 1 6 10.5Z"/>
-                        </svg>
+                        <x-icon name="lock" class="h-5 w-5" />
                     </span>
                     <input id="password_confirmation" type="password" x-bind:type="showConfirm ? 'text' : 'password'" wire:model="password_confirmation" autocomplete="new-password"
                            placeholder="Re-enter your new password"
@@ -156,15 +141,10 @@
                     <button type="button" @click="showConfirm = !showConfirm" aria-label="Toggle password visibility"
                             class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition hover:text-gray-600 focus:outline-none">
                         <template x-if="!showConfirm">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12Z"/>
-                                <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                            <x-icon name="eye" class="h-5 w-5" />
                         </template>
                         <template x-if="showConfirm">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.22A10.6 10.6 0 0 0 2.25 12s3.75 7.5 9.75 7.5c1.9 0 3.66-.54 5.13-1.46M6.3 6.3A10.6 10.6 0 0 1 12 4.5c6 0 9.75 7.5 9.75 7.5a10.6 10.6 0 0 1-2.13 3.02M3 3l18 18"/>
-                            </svg>
+                            <x-icon name="eye-off" class="h-5 w-5" />
                         </template>
                     </button>
                 </div>
@@ -176,9 +156,7 @@
                     class="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand to-brand-dark text-sm font-semibold text-white shadow-sm transition duration-150 hover:shadow-md hover:brightness-95 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-80">
                 <span wire:loading.remove class="flex items-center gap-2">
                     Reset Password
-                    <svg class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
-                    </svg>
+                <x-icon name="arrow-right" class="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" stroke-width="2" />
                 </span>
                 <span wire:loading class="opacity-80">Resetting password…</span>
             </button>
@@ -188,9 +166,7 @@
 
         <p class="text-center text-sm text-gray-500">
             <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 font-medium text-gray-500 transition hover:text-brand">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
-                </svg>
+                <x-icon name="arrow-left" class="h-4 w-4" stroke-width="2" />
                 Back to Sign In
             </a>
         </p>

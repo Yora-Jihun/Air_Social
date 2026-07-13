@@ -43,17 +43,17 @@
                  x-transition:leave-end="opacity-0 -translate-y-5 scale-95"
                  class="pointer-events-auto flex items-center gap-2.5 rounded-full bg-[#0F172A] py-2.5 pl-3 pr-2.5 text-sm font-medium text-white shadow-2xl ring-1 ring-white/10">
                 <span x-show="$store.toast.type === 'success'" class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-green-500/20 text-green-400">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <x-icon name="check" class="h-3.5 w-3.5" stroke-width="3" />
                 </span>
                 <span x-show="$store.toast.type === 'error'" class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-500/20 text-red-400">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                    <x-icon name="x" class="h-3.5 w-3.5" stroke-width="3" />
                 </span>
                 <span x-show="$store.toast.type === 'info'" class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-blue-500/20 text-blue-400">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                    <x-icon name="info" class="h-3.5 w-3.5" stroke-width="2.5" />
                 </span>
                 <span x-text="$store.toast.message" class="whitespace-pre-line pr-1"></span>
                 <button type="button" @click="$store.toast.hide()" class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white focus:outline-none">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                    <x-icon name="x" class="h-3.5 w-3.5" stroke-width="2.5" />
                 </button>
             </div>
         </div>
