@@ -78,6 +78,17 @@
             {{-- Main column --}}
             <main class="space-y-4">
                 @if ($activeTab === 'posts')
+                    {{-- Facebook-style "Create post" trigger --}}
+                    <x-card class="p-4">
+                        <div class="flex items-center gap-3">
+                            <x-avatar :src="null" :name="auth()->user()->name" size="md" />
+                            <button wire:click="openCreatePost('company')" type="button"
+                                    class="h-10 flex-1 rounded-full bg-gray-100 px-4 text-left text-sm text-gray-500 transition hover:bg-gray-200">
+                                Share an update with {{ $company['name'] }}…
+                            </button>
+                        </div>
+                    </x-card>
+
                     @foreach ($posts as $post)
                         <livewire:newsfeed.post-card :post="$post" :key="$post['id']" />
                     @endforeach
@@ -177,7 +188,30 @@
                                 </button>
                             </div>
 
-                            <h4 class="mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Members</h4>
+                            {{-- Department-scoped composer trigger --}}
+                            <x-card class="mt-4 p-4">
+                                <div class="flex items-center gap-3">
+                                    <x-avatar :src="null" :name="auth()->user()->name" size="md" />
+                                    <button wire:click="openCreatePost('department', {{ $dept['id'] }})" type="button"
+                                            class="h-10 flex-1 rounded-full bg-gray-100 px-4 text-left text-sm text-gray-500 transition hover:bg-gray-200">
+                                        Write something to {{ $dept['name'] }}…
+                                    </button>
+                                </div>
+                            </x-card>
+
+                            {{-- Department-scoped feed --}}
+                            <div class="mt-4 space-y-4">
+                                @foreach ($dept['posts'] ?? [] as $post)
+                                    <livewire:newsfeed.post-card :post="$post" :key="'dept-'.$post['id']" />
+                                @endforeach
+                                @if (empty($dept['posts']))
+                                    <x-card class="p-6 text-center text-sm text-gray-400">
+                                        No posts in this department yet.
+                                    </x-card>
+                                @endif
+                            </div>
+
+                            <h4 class="mt-6 text-xs font-semibold uppercase tracking-wide text-gray-400">Members</h4>
                             <ul class="mt-2 divide-y divide-gray-100">
                                 @foreach ($dept['members'] as $member)
                                     <li class="flex items-center gap-3 py-3">
@@ -302,6 +336,91 @@
                     </ul>
                 </x-card>
             </aside>
+
+        {{-- Create post modal (Facebook-style, static) --}}
+        <style>
+            @keyframes cp-pop {
+                from { opacity: 0; transform: translateY(8px) scale(.98); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .cp-modal { animation: cp-pop .18s ease-out; }
+        </style>
+        @if ($createPostOpen)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+                 wire:click="closeCreatePost" wire:key="create-post-modal">
+                <div class="cp-modal flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" wire:click.stop>
+                    {{-- Header --}}
+                    <div class="relative border-b border-gray-200 px-4 py-3 text-center">
+                        <h3 class="text-base font-bold text-gray-900">Create post</h3>
+                        <button wire:click="closeCreatePost" type="button"
+                                class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    {{-- Scrollable content --}}
+                    <div class="flex-1 overflow-y-auto">
+                        {{-- Author + audience --}}
+                        <div class="px-4 pt-4">
+                            <div class="flex items-center gap-2">
+                                <x-avatar :src="null" :name="auth()->user()->name" size="md" />
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
+                                    @if ($postScope === 'department' && $postDeptId)
+                                        @php
+                                            $d = collect($departments)->firstWhere('id', $postDeptId);
+                                        @endphp
+                                        <span class="inline-flex items-center gap-1 text-xs font-medium text-gray-500">
+                                            <x-icon name="building" class="h-3.5 w-3.5" />
+                                            {{ $d['name'] }} only
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 text-xs font-medium text-gray-500">
+                                            <x-icon name="users" class="h-3.5 w-3.5" />
+                                            Public
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Body --}}
+                        <div class="px-4 py-3">
+                            <textarea wire:model="newPost" rows="5" autofocus
+                                      placeholder="What's on your mind, {{ auth()->user()->name }}?"
+                                      class="w-full resize-none border-0 p-0 text-lg leading-relaxed outline-none placeholder:text-gray-400"></textarea>
+                        </div>
+
+                        {{-- Add to your post --}}
+                        <div class="mx-4 mb-4 rounded-xl bg-gray-50 px-3 py-2">
+                            <p class="text-xs font-medium text-gray-500">Add to your post</p>
+                            <div class="mt-2 flex items-center gap-1">
+                                <button type="button" class="grid h-9 w-9 place-items-center rounded-full text-blue-600 transition hover:bg-blue-100">
+                                    <x-icon name="image" class="h-5 w-5" />
+                                </button>
+                                <button type="button" class="grid h-9 w-9 place-items-center rounded-full text-green-600 transition hover:bg-green-100">
+                                    <x-icon name="building" class="h-5 w-5" />
+                                </button>
+                                <button type="button" class="grid h-9 w-9 place-items-center rounded-full text-yellow-500 transition hover:bg-yellow-100">
+                                    <x-icon name="calendar" class="h-5 w-5" />
+                                </button>
+                                <button type="button" class="grid h-9 w-9 place-items-center rounded-full text-purple-600 transition hover:bg-purple-100">
+                                    <x-icon name="user-group" class="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="border-t border-gray-200 px-4 py-3">
+                        <button wire:click="createPost" type="button" :disabled="$newPost === ''"
+                                class="w-full rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            Post
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         </div>
     </div>
