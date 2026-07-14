@@ -7,6 +7,7 @@ use App\Livewire\Auth\VerifyOtp;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Newsfeed\Index as Newsfeed;
+use App\Livewire\Company\Show as CompanyShow;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,7 @@ Route::middleware(['auth', 'throttle:20,1'])->group(function () {
 
     Route::middleware('verified')->group(function () {
         Route::get('/newsfeed', Newsfeed::class)->name('newsfeed');
+        Route::get('/companies/{slug}', CompanyShow::class)->name('companies.show');
     });
 });
 

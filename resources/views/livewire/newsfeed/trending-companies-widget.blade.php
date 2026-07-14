@@ -8,7 +8,7 @@
         <ul class="mt-3 space-y-1">
             @foreach ($companies as $company)
                 <li>
-                    <a href="#" class="flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-gray-50">
+                    <a href="{{ route('companies.show', ['slug' => Str::slug($company['name'])]) }}" class="flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-gray-50">
                         <x-avatar :src="$company['avatar'] ?? null" :name="$company['name']" size="sm" />
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-medium text-gray-800">{{ $company['name'] }}</p>
