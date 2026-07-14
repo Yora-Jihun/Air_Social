@@ -299,7 +299,7 @@ class Show extends Component
             foreach ($this->departments as &$dept) {
                 if ($dept['id'] === $this->postDeptId) {
                     $nextId = collect($dept['posts'] ?? [])->max('id') + 1;
-                    $dept['posts'][] = [
+                    $post = [
                         'id' => $nextId,
                         'author' => auth()->user()->name,
                         'role' => 'Department Admin · ' . $dept['name'],
@@ -311,13 +311,15 @@ class Show extends Component
                         'reactions' => ['like' => 0, 'heart' => 0, 'wow' => 0],
                         'comment_count' => 0,
                     ];
+                    // Prepend so the newest post shows at the top.
+                    $dept['posts'] = array_merge([$post], $dept['posts'] ?? []);
                     break;
                 }
             }
             unset($dept);
         } else {
             $nextId = collect($this->posts)->max('id') + 1;
-            $this->posts[] = [
+            $post = [
                 'id' => $nextId,
                 'author' => $this->company['name'],
                 'role' => 'Official · ' . $this->company['name'],
@@ -329,6 +331,8 @@ class Show extends Component
                 'reactions' => ['like' => 0, 'heart' => 0, 'wow' => 0],
                 'comment_count' => 0,
             ];
+            // Prepend so the newest post shows at the top.
+            array_unshift($this->posts, $post);
         }
 
         $this->closeCreatePost();
