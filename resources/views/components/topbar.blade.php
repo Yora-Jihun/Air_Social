@@ -23,7 +23,7 @@
                    class="grid h-10 w-10 place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-blue-600">
                     <x-icon name="grid" class="h-6 w-6" />
                 </a>
-                <a href="#" aria-label="Messages"
+                <a href="{{ route('messages.index') }}" aria-label="Messages"
                     class="relative grid h-10 w-10 place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-blue-600">
                     <img src="{{ asset('images/chat.png') }}" alt="Messages"
                          class="h-5 w-5 object-contain" />

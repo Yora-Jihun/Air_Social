@@ -8,11 +8,13 @@
     @livewireStyles
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="pb-20 lg:pb-0">
+    <div class="{{ request()->routeIs('messages.index') ? 'lg:pb-0' : 'pb-20 lg:pb-0' }}">
         {{ $slot }}
     </div>
 
-    <x-bottom-nav />
+    @unless (request()->routeIs('messages.index'))
+        <x-bottom-nav />
+    @endunless
 
     @livewireScripts
 </body>

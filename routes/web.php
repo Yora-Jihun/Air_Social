@@ -9,6 +9,7 @@ use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Newsfeed\Index as Newsfeed;
 use App\Livewire\Company\Show as CompanyShow;
 use App\Livewire\Profile\Show as ProfileShow;
+use App\Livewire\Messages\Index as Messages;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,7 @@ Route::middleware(['auth', 'throttle:20,1'])->group(function () {
         Route::get('/newsfeed', Newsfeed::class)->name('newsfeed');
         Route::get('/companies/{slug}', CompanyShow::class)->name('companies.show');
         Route::get('/profile', ProfileShow::class)->name('profile.show');
+        Route::get('/messages', Messages::class)->name('messages.index');
     });
 });
 
