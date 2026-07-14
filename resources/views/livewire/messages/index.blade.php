@@ -25,13 +25,7 @@
                                         'bg-blue-50' => $activeConversation === $conv['id'],
                                     ])>
                                 <span class="relative shrink-0">
-                                    <x-avatar :src="$conv['avatar'] ?? null" :name="$conv['name']" size="md" />
-                                    @if ($conv['online'] ?? false)
-                                        <span class="absolute bottom-0 right-0 flex h-3 w-3">
-                                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                                            <span class="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
-                                        </span>
-                                    @endif
+                                    <x-avatar :src="$conv['avatar'] ?? null" :name="$conv['name']" size="md" :online="$conv['online'] ?? false" />
                                 </span>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center justify-between gap-2">
@@ -68,7 +62,7 @@
                             <x-icon name="chevron-down" class="h-5 w-5 rotate-90" />
                         </button>
                         <span class="relative shrink-0">
-                            <x-avatar :src="$conv['avatar'] ?? null" :name="$conv['name']" size="sm" />
+                            <x-avatar :src="$conv['avatar'] ?? null" :name="$conv['name']" size="sm" :online="$conv['online'] ?? false" />
                         </span>
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-gray-900">{{ $conv['name'] }}</p>
@@ -91,8 +85,7 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="flex justify-start gap-2">
-                                    <x-avatar :src="$conv['avatar'] ?? null" :name="$conv['name']" size="sm" class="mt-1" />
+                                <div class="flex justify-start">
                                     <div class="max-w-[75%] rounded-2xl rounded-bl-sm bg-gray-100 px-3 py-2 text-sm text-gray-800">
                                         <p class="whitespace-pre-line">{{ $msg['text'] }}</p>
                                         <p class="mt-1 text-right text-[10px] text-gray-400">{{ $msg['time'] }}</p>

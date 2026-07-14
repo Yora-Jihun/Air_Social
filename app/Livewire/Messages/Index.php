@@ -22,7 +22,7 @@ class Index extends Component
             ['id' => 1, 'name' => 'Maria Cristina Reyes', 'role' => 'Relationship Manager · BDO', 'avatar' => null, 'last' => 'Sounds good, see you at 3!', 'time' => '10:32', 'unread' => 2, 'online' => true],
             ['id' => 2, 'name' => 'Juan Miguel Santos', 'role' => 'Software Engineer · BDO', 'avatar' => null, 'last' => 'Pushed the fix to staging.', 'time' => '9:15', 'unread' => 0, 'online' => false],
             ['id' => 3, 'name' => 'Ana Marie Cruz', 'role' => 'Branch Operations · BDO', 'avatar' => null, 'last' => 'Thanks for the update!', 'time' => 'Yesterday', 'unread' => 0, 'online' => true],
-            ['id' => 4, 'name' => 'Paolo Mendoza', 'role' => 'Data Analyst · BDO', 'avatar' => null, 'last' => 'Numbers look great this quarter.', 'time' => 'Monday', 'unread' => 0, 'online' => false],
+            ['id' => 4, 'name' => 'Paolo Mendoza', 'role' => 'Data Analyst · BDO', 'avatar' => null, 'last' => 'Hi There Jerome! Numbers look great this quarter.', 'time' => '8:21 PM', 'unread' => 0, 'online' => true],
         ];
 
         $this->threads = [
@@ -41,7 +41,7 @@ class Index extends Component
                 ['from' => 'me', 'text' => 'Thanks for the update!', 'time' => 'Yesterday'],
             ],
             4 => [
-                ['from' => 'them', 'name' => 'Paolo Mendoza', 'text' => 'Numbers look great this quarter.', 'time' => 'Monday'],
+                ['from' => 'them', 'name' => 'Paolo Mendoza', 'text' => 'Hi There Jerome! Numbers look great this quarter.', 'time' => '8:23 PM'],
             ],
         ];
     }
