@@ -22,7 +22,7 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 pb-3">
+                <div class="flex flex-wrap gap-2 pb-3">
                     @if ($company['is_admin'] ?? false)
                         <button type="button"
                                 class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -62,11 +62,11 @@
 
     {{-- Tabs --}}
     <div class="border-b border-gray-200 bg-white">
-        <div class="mx-auto flex max-w-5xl gap-1 px-2">
+        <div class="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-2">
             @foreach (['posts' => 'Posts', 'about' => 'About', 'people' => 'People', 'jobs' => 'Jobs', 'departments' => 'Departments'] as $key => $label)
                 <button wire:click="setTab('{{ $key }}')" type="button"
                         @class([
-                            'border-b-2 px-4 py-3 text-sm font-medium transition',
+                            'whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition',
                             'border-blue-600 text-blue-600' => $activeTab === $key,
                             'border-transparent text-gray-500 hover:text-gray-700' => $activeTab !== $key,
                         ])>
@@ -309,7 +309,7 @@
             </main>
 
             {{-- Right sidebar --}}
-            <aside class="space-y-4 lg:sticky lg:top-6">
+            <aside class="hidden space-y-4 lg:block lg:sticky lg:top-6">
                 <x-card class="p-4">
                     <h3 class="text-sm font-semibold text-gray-900">Admins</h3>
                     <ul class="mt-3 space-y-3">

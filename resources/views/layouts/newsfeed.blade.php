@@ -8,7 +8,12 @@
     @livewireStyles
 </head>
 <body class="bg-gray-100 min-h-screen">
-    {{ $slot }}
+    <div class="pb-20 lg:pb-0">
+        {{ $slot }}
+    </div>
+
+    <x-bottom-nav />
+
     @livewireScripts
 </body>
 </html>

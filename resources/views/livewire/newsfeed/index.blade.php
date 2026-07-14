@@ -7,7 +7,7 @@
             {{-- Left sidebar (fixed width, sticky) --}}
             <aside class="space-y-4 lg:sticky lg:top-6">
                 <livewire:newsfeed.profile-card />
-                <nav class="rounded-xl bg-white p-2 shadow-sm ring-1 ring-gray-200">
+                <nav class="hidden rounded-xl bg-white p-2 shadow-sm ring-1 ring-gray-200 lg:block">
                     <x-sidebar-nav-item icon="home" label="News Feed" :active="true" href="#" />
                     <x-sidebar-nav-item icon="user-group" label="Friends" href="#" />
                     <x-sidebar-nav-item icon="users" label="Groups" href="#" />
@@ -32,7 +32,7 @@
             </main>
 
             {{-- Right aside (fixed width, sticky) --}}
-            <aside class="space-y-4 lg:sticky lg:top-6">
+            <aside class="hidden space-y-4 lg:block lg:sticky lg:top-6">
                 <livewire:newsfeed.people-you-may-know-widget />
                 <livewire:newsfeed.trending-companies-widget />
             </aside>

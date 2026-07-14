@@ -21,7 +21,7 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 pb-3">
+                <div class="flex flex-wrap gap-2 pb-3">
                     <button wire:click="openEdit" type="button"
                             class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                         <x-icon name="cog" class="h-4 w-4" />
