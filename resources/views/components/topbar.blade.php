@@ -51,7 +51,7 @@
                 <div class="border-b border-gray-100 px-4 py-2">
                     <p class="truncate text-sm font-semibold text-gray-900">{{ $userName ?? 'You' }}</p>
                 </div>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100">View profile</a>
+                <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100">View profile</a>
                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100">Settings</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

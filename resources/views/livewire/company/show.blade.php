@@ -29,6 +29,11 @@
                             <x-icon name="cog" class="h-4 w-4" />
                             Manage
                         </button>
+                        <button wire:click="openPlugins" type="button"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                            <x-icon name="blocks" class="h-4 w-4" />
+                            Plugins
+                        </button>
                     @elseif ($company['is_member'] ?? false)
                         <button type="button"
                                 class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -215,10 +220,13 @@
                             <ul class="mt-2 divide-y divide-gray-100">
                                 @foreach ($dept['members'] as $member)
                                     <li class="flex items-center gap-3 py-3">
-                                        <x-avatar :src="$member['avatar'] ?? null" :name="$member['name']" size="md" />
-                                        <div class="min-w-0 flex-1">
-                                            <p class="truncate text-sm font-medium text-gray-800">{{ $member['name'] }}</p>
-                                        </div>
+                                        <button wire:click="viewMember({{ $dept['id'] }}, '{{ $member['name'] }}')" type="button"
+                                                class="flex min-w-0 flex-1 items-center gap-3 text-left">
+                                            <x-avatar :src="$member['avatar'] ?? null" :name="$member['name']" size="md" />
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-sm font-medium text-gray-800">{{ $member['name'] }}</p>
+                                            </div>
+                                        </button>
                                         @if (($member['role'] ?? '') === 'Lead')
                                             <span class="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
                                                 Department Admin
@@ -417,6 +425,121 @@
                                 class="w-full rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
                             Post
                         </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Plugins marketplace modal (static placeholder) --}}
+        @if ($pluginsOpen)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+                 wire:click="closePlugins" wire:key="plugins-modal">
+                <div class="cp-modal w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" wire:click.stop>
+                    <div class="relative border-b border-gray-200 px-4 py-3 text-center">
+                        <h3 class="text-base font-bold text-gray-900">Plugins</h3>
+                        <button wire:click="closePlugins" type="button"
+                                class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div class="max-h-[70vh] overflow-y-auto px-4 py-4">
+                        <p class="text-sm text-gray-500">Extend this company with ready-made templates for managing day-to-day tasks. More plugins are coming soon.</p>
+
+                        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            @foreach ([
+                                ['name' => 'Payroll', 'desc' => 'Run payroll and track compensation.', 'icon' => 'briefcase'],
+                                ['name' => 'Attendance', 'desc' => 'Log attendance and work hours.', 'icon' => 'calendar'],
+                                ['name' => 'Tasks', 'desc' => 'Assign and track team tasks.', 'icon' => 'check'],
+                                ['name' => 'Announcements', 'desc' => 'Broadcast company-wide notices.', 'icon' => 'bell'],
+                            ] as $plugin)
+                                <div class="rounded-xl border border-gray-200 p-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="grid h-9 w-9 place-items-center rounded-lg bg-blue-50 text-blue-600">
+                                            <x-icon name="{{ $plugin['icon'] }}" class="h-5 w-5" />
+                                        </div>
+                                        <p class="text-sm font-semibold text-gray-900">{{ $plugin['name'] }}</p>
+                                    </div>
+                                    <p class="mt-2 text-xs text-gray-500">{{ $plugin['desc'] }}</p>
+                                    <button type="button" disabled
+                                            class="mt-3 w-full cursor-not-allowed rounded-lg bg-gray-100 py-1.5 text-xs font-semibold text-gray-400">
+                                        Coming soon
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Member profile modal (admin view, static) --}}
+        @if ($selectedMember)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+                 wire:click="closeMember" wire:key="member-modal">
+                <div class="cp-modal w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" wire:click.stop>
+                    {{-- Header --}}
+                    <div class="flex items-center gap-3 border-b border-gray-200 px-4 py-4">
+                        <x-avatar :src="$selectedMember['avatar'] ?? null" :name="$selectedMember['name']" size="lg" />
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-base font-bold text-gray-900">{{ $selectedMember['name'] }}</p>
+                            <p class="truncate text-sm text-gray-500">{{ $selectedMember['role'] }} · {{ $selectedMember['department'] }}</p>
+                        </div>
+                        <button wire:click="closeMember" type="button"
+                                class="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div class="max-h-[70vh] space-y-4 overflow-y-auto px-4 py-4">
+                        {{-- Public info --}}
+                        <div>
+                            <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Public info</h4>
+                            <dl class="mt-2 divide-y divide-gray-100 rounded-xl border border-gray-200">
+                                @foreach ($selectedMember['public'] ?? [] as $row)
+                                    <div class="flex justify-between gap-3 px-3 py-2 text-sm">
+                                        <dt class="text-gray-500">{{ $row['label'] }}</dt>
+                                        <dd class="truncate font-medium text-gray-800">{{ $row['value'] }}</dd>
+                                    </div>
+                                @endforeach
+                            </dl>
+                        </div>
+
+                        {{-- Private documents (admin only) --}}
+                        <div class="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2 text-amber-700">
+                                    <x-icon name="lock" class="h-4 w-4" />
+                                    <h4 class="text-xs font-semibold uppercase tracking-wide">Private documents</h4>
+                                </div>
+                                <button wire:click="toggleReveal" type="button"
+                                        class="rounded-lg border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100">
+                                    {{ $revealPrivate ? 'Hide' : 'Reveal' }}
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs text-amber-600">Only visible to company/department admins. Reveals are logged.</p>
+
+                            <dl class="mt-2 divide-y divide-amber-100 rounded-lg bg-white">
+                                @foreach ($selectedMember['private'] ?? [] as $doc)
+                                    <div class="flex justify-between gap-3 px-3 py-2 text-sm">
+                                        <dt class="text-gray-500">{{ $doc['label'] }}</dt>
+                                        <dd class="truncate font-medium text-gray-800">
+                                            @if ($revealPrivate)
+                                                {{ $doc['value'] }}
+                                            @elseif ($doc['type'] === 'assets')
+                                                <span class="text-gray-400">Assigned assets (hidden)</span>
+                                            @else
+                                                •••• {{ substr($doc['value'], -4) }}
+                                            @endif
+                                        </dd>
+                                    </div>
+                                @endforeach
+                            </dl>
+
+                            @if ($revealPrivate)
+                                <p class="mt-2 text-[11px] text-amber-600">Viewed by you · just now (audit logged)</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>

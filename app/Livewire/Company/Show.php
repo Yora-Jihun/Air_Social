@@ -25,6 +25,13 @@ class Show extends Component
 
     public bool $createPostOpen = false;
 
+    public bool $pluginsOpen = false;
+
+    /** @var array<string, mixed>|null */
+    public ?array $selectedMember = null;
+
+    public bool $revealPrivate = false;
+
     /** @var array<string, mixed> */
     public array $company = [];
 
@@ -115,6 +122,7 @@ class Show extends Component
         ];
 
         // TODO: replace with $this->company->departments()->with(['users','posts'])->get()
+        // Each member carries static public + private (PII) info for the admin member-profile view.
         $this->departments = [
             [
                 'id' => 1,
@@ -122,8 +130,38 @@ class Show extends Component
                 'member_count' => 320,
                 'lead' => 'Maria Cristina Reyes',
                 'members' => [
-                    ['name' => 'Maria Cristina Reyes', 'role' => 'Lead', 'avatar' => null],
-                    ['name' => 'Ana Marie Cruz', 'role' => 'Member', 'avatar' => null],
+                    [
+                        'name' => 'Maria Cristina Reyes', 'role' => 'Lead', 'avatar' => null,
+                        'public' => [
+                            ['label' => 'Email', 'value' => 'maria.reyes@bdo.com'],
+                            ['label' => 'Phone', 'value' => '+63 917 555 0148'],
+                            ['label' => 'Location', 'value' => 'Makati'],
+                        ],
+                        'private' => [
+                            ['label' => 'SSS Number', 'type' => 'id', 'value' => '12-3456-7890'],
+                            ['label' => 'Pag-IBIG Number', 'type' => 'id', 'value' => '1234-5678-9012'],
+                            ['label' => 'PhilHealth Number', 'type' => 'id', 'value' => '12-345678901-2'],
+                            ['label' => 'TIN', 'type' => 'id', 'value' => '123-456-789'],
+                            ['label' => 'Employee ID', 'type' => 'id', 'value' => 'BDO-004821'],
+                            ['label' => 'Company Assets', 'type' => 'assets', 'value' => 'MacBook Pro 14", iPhone 13, Building access card'],
+                        ],
+                    ],
+                    [
+                        'name' => 'Ana Marie Cruz', 'role' => 'Member', 'avatar' => null,
+                        'public' => [
+                            ['label' => 'Email', 'value' => 'ana.cruz@bdo.com'],
+                            ['label' => 'Phone', 'value' => '+63 918 555 0177'],
+                            ['label' => 'Location', 'value' => 'Makati'],
+                        ],
+                        'private' => [
+                            ['label' => 'SSS Number', 'type' => 'id', 'value' => '23-4567-8901'],
+                            ['label' => 'Pag-IBIG Number', 'type' => 'id', 'value' => '2345-6789-0123'],
+                            ['label' => 'PhilHealth Number', 'type' => 'id', 'value' => '23-456789012-3'],
+                            ['label' => 'TIN', 'type' => 'id', 'value' => '234-567-890'],
+                            ['label' => 'Employee ID', 'type' => 'id', 'value' => 'BDO-005133'],
+                            ['label' => 'Company Assets', 'type' => 'assets', 'value' => 'Dell Latitude, Building access card'],
+                        ],
+                    ],
                 ],
                 'posts' => [
                     [
@@ -158,8 +196,38 @@ class Show extends Component
                 'member_count' => 145,
                 'lead' => 'Juan Miguel Santos',
                 'members' => [
-                    ['name' => 'Juan Miguel Santos', 'role' => 'Lead', 'avatar' => null],
-                    ['name' => 'Paolo Mendoza', 'role' => 'Member', 'avatar' => null],
+                    [
+                        'name' => 'Juan Miguel Santos', 'role' => 'Lead', 'avatar' => null,
+                        'public' => [
+                            ['label' => 'Email', 'value' => 'juan.santos@bdo.com'],
+                            ['label' => 'Phone', 'value' => '+63 919 555 0188'],
+                            ['label' => 'Location', 'value' => 'Taguig'],
+                        ],
+                        'private' => [
+                            ['label' => 'SSS Number', 'type' => 'id', 'value' => '34-5678-9012'],
+                            ['label' => 'Pag-IBIG Number', 'type' => 'id', 'value' => '3456-7890-1234'],
+                            ['label' => 'PhilHealth Number', 'type' => 'id', 'value' => '34-567890123-4'],
+                            ['label' => 'TIN', 'type' => 'id', 'value' => '345-678-901'],
+                            ['label' => 'Employee ID', 'type' => 'id', 'value' => 'BDO-006042'],
+                            ['label' => 'Company Assets', 'type' => 'assets', 'value' => 'MacBook Pro 16", iPhone 14, Dev server access'],
+                        ],
+                    ],
+                    [
+                        'name' => 'Paolo Mendoza', 'role' => 'Member', 'avatar' => null,
+                        'public' => [
+                            ['label' => 'Email', 'value' => 'paolo.mendoza@bdo.com'],
+                            ['label' => 'Phone', 'value' => '+63 920 555 0199'],
+                            ['label' => 'Location', 'value' => 'Taguig'],
+                        ],
+                        'private' => [
+                            ['label' => 'SSS Number', 'type' => 'id', 'value' => '45-6789-0123'],
+                            ['label' => 'Pag-IBIG Number', 'type' => 'id', 'value' => '4567-8901-2345'],
+                            ['label' => 'PhilHealth Number', 'type' => 'id', 'value' => '45-678901234-5'],
+                            ['label' => 'TIN', 'type' => 'id', 'value' => '456-789-012'],
+                            ['label' => 'Employee ID', 'type' => 'id', 'value' => 'BDO-007115'],
+                            ['label' => 'Company Assets', 'type' => 'assets', 'value' => 'Lenovo ThinkPad, Building access card'],
+                        ],
+                    ],
                 ],
                 'posts' => [
                     [
@@ -182,8 +250,38 @@ class Show extends Component
                 'member_count' => 210,
                 'lead' => 'Paolo Mendoza',
                 'members' => [
-                    ['name' => 'Paolo Mendoza', 'role' => 'Lead', 'avatar' => null],
-                    ['name' => 'Maria Cristina Reyes', 'role' => 'Member', 'avatar' => null],
+                    [
+                        'name' => 'Paolo Mendoza', 'role' => 'Lead', 'avatar' => null,
+                        'public' => [
+                            ['label' => 'Email', 'value' => 'paolo.mendoza@bdo.com'],
+                            ['label' => 'Phone', 'value' => '+63 920 555 0199'],
+                            ['label' => 'Location', 'value' => 'Mandaluyong'],
+                        ],
+                        'private' => [
+                            ['label' => 'SSS Number', 'type' => 'id', 'value' => '45-6789-0123'],
+                            ['label' => 'Pag-IBIG Number', 'type' => 'id', 'value' => '4567-8901-2345'],
+                            ['label' => 'PhilHealth Number', 'type' => 'id', 'value' => '45-678901234-5'],
+                            ['label' => 'TIN', 'type' => 'id', 'value' => '456-789-012'],
+                            ['label' => 'Employee ID', 'type' => 'id', 'value' => 'BDO-007115'],
+                            ['label' => 'Company Assets', 'type' => 'assets', 'value' => 'Lenovo ThinkPad, Building access card'],
+                        ],
+                    ],
+                    [
+                        'name' => 'Maria Cristina Reyes', 'role' => 'Member', 'avatar' => null,
+                        'public' => [
+                            ['label' => 'Email', 'value' => 'maria.reyes@bdo.com'],
+                            ['label' => 'Phone', 'value' => '+63 917 555 0148'],
+                            ['label' => 'Location', 'value' => 'Makati'],
+                        ],
+                        'private' => [
+                            ['label' => 'SSS Number', 'type' => 'id', 'value' => '12-3456-7890'],
+                            ['label' => 'Pag-IBIG Number', 'type' => 'id', 'value' => '1234-5678-9012'],
+                            ['label' => 'PhilHealth Number', 'type' => 'id', 'value' => '12-345678901-2'],
+                            ['label' => 'TIN', 'type' => 'id', 'value' => '123-456-789'],
+                            ['label' => 'Employee ID', 'type' => 'id', 'value' => 'BDO-004821'],
+                            ['label' => 'Company Assets', 'type' => 'assets', 'value' => 'MacBook Pro 14", iPhone 13, Building access card'],
+                        ],
+                    ],
                 ],
                 'posts' => [
                     [
@@ -193,7 +291,7 @@ class Show extends Component
                         'avatar' => null,
                         'timestamp' => '3h',
                         'visibility' => 'Department',
-                        'body' => 'Monthly reconciliation is done — figures balanced. Great job team.',
+                        'body' => 'Monthly reconciliation is done - figures balanced. Great job team.',
                         'like_count' => 9,
                         'reactions' => ['like' => 5, 'heart' => 3, 'wow' => 1],
                         'comment_count' => 4,
@@ -218,6 +316,36 @@ class Show extends Component
     public function backToDepartments(): void
     {
         $this->selectedDept = null;
+    }
+
+    // --- Member profile (admin view, static) ---
+
+    public function viewMember(int $deptId, string $memberName): void
+    {
+        // TODO: authorize via DepartmentPolicy/CompanyPolicy (company or department admin only).
+        foreach ($this->departments as $dept) {
+            if ($dept['id'] !== $deptId) {
+                continue;
+            }
+            foreach ($dept['members'] as $member) {
+                if (($member['name'] ?? null) === $memberName) {
+                    $this->selectedMember = $member + ['department' => $dept['name']];
+                    $this->revealPrivate = false;
+                    return;
+                }
+            }
+        }
+    }
+
+    public function closeMember(): void
+    {
+        $this->selectedMember = null;
+        $this->revealPrivate = false;
+    }
+
+    public function toggleReveal(): void
+    {
+        $this->revealPrivate = ! $this->revealPrivate;
     }
 
     public function openCreateDept(): void
@@ -285,6 +413,16 @@ class Show extends Component
         $this->newPost = '';
         $this->postScope = 'company';
         $this->postDeptId = null;
+    }
+
+    public function openPlugins(): void
+    {
+        $this->pluginsOpen = true;
+    }
+
+    public function closePlugins(): void
+    {
+        $this->pluginsOpen = false;
     }
 
     public function createPost(): void
