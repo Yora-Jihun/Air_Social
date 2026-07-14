@@ -2,7 +2,7 @@
 
 <header class="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-        <a href="#" class="flex shrink-0 items-center gap-2">
+            <a href="{{ route('newsfeed') }}" class="flex shrink-0 items-center gap-2">
             <img src="{{ asset('images/logo.png') }}" alt="Air Social" class="h-8 w-8 object-contain">
             <span class="hidden text-lg font-extrabold tracking-tight text-gray-900 sm:block">Air Social</span>
         </a>
@@ -29,15 +29,53 @@
                          class="h-5 w-5 object-contain" />
                     <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600"></span>
                 </a>
-                <a href="#" aria-label="Notifications"
-                   class="relative grid h-10 w-10 place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-blue-600">
-                    <x-icon name="bell" class="h-5 w-5" />
-                    @if ($notificationCount > 0)
-                        <span class="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                            {{ $notificationCount }}
-                        </span>
-                    @endif
-                </a>
+                <div x-data="{ open: false }" class="relative">
+                    <button type="button" @click="open = ! open" @click.outside="open = false" aria-label="Notifications"
+                            class="relative grid h-10 w-10 place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-blue-600">
+                        <x-icon name="bell" class="h-5 w-5" />
+                        @if ($notificationCount > 0)
+                            <span class="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                                {{ $notificationCount }}
+                            </span>
+                        @endif
+                    </button>
+
+                    <div x-show="open" x-cloak x-transition.origin.top.right
+                         class="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                        <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                            <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+                            <button type="button" class="text-xs font-medium text-blue-600 hover:underline">Mark all read</button>
+                        </div>
+
+                        <ul class="max-h-80 divide-y divide-gray-100 overflow-y-auto">
+                            <li class="flex gap-3 px-4 py-3 hover:bg-gray-50">
+                                <x-avatar name="Maria Cristina Reyes" size="sm" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm text-gray-700"><span class="font-semibold text-gray-900">Maria Cristina Reyes</span> commented on your post.</p>
+                                    <p class="text-xs text-gray-400">2h</p>
+                                </div>
+                                <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600"></span>
+                            </li>
+                            <li class="flex gap-3 px-4 py-3 hover:bg-gray-50">
+                                <x-avatar name="Juan Miguel Santos" size="sm" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm text-gray-700"><span class="font-semibold text-gray-900">Juan Miguel Santos</span> mentioned you in Retail Banking.</p>
+                                    <p class="text-xs text-gray-400">5h</p>
+                                </div>
+                                <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600"></span>
+                            </li>
+                            <li class="flex gap-3 px-4 py-3 hover:bg-gray-50">
+                                <x-avatar name="Ana Marie Cruz" size="sm" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm text-gray-700"><span class="font-semibold text-gray-900">Ana Marie Cruz</span> sent you a connection request.</p>
+                                    <p class="text-xs text-gray-400">1d</p>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <a href="#" class="block border-t border-gray-100 px-4 py-3 text-center text-sm font-medium text-blue-600 hover:bg-gray-50">See all notifications</a>
+                    </div>
+                </div>
             </nav>
 
             <div x-data="{ open: false }" class="relative">
