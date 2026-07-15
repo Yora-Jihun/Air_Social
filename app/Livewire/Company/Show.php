@@ -6,7 +6,7 @@ use Livewire\Component;
 
 class Show extends Component
 {
-    public string $activeTab = 'posts'; // posts | about | people | jobs | departments
+    public string $activeTab = 'posts'; // posts | about | people | jobs | departments | <installed plugins>
 
     /** @var array<int, array<string, mixed>> */
     public array $departments = [];
@@ -26,6 +26,12 @@ class Show extends Component
     public bool $createPostOpen = false;
 
     public bool $pluginsOpen = false;
+
+    /** @var array<int, string> */
+    public array $installedPlugins = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $attendanceRecords = [];
 
     /** @var array<string, mixed>|null */
     public ?array $selectedMember = null;
@@ -397,7 +403,7 @@ class Show extends Component
         unset($dept);
     }
 
-    // --- Create post modal (Facebook-style, static) ---
+    // --- Create post modal (composer style) ---
 
     public function openCreatePost(string $scope = 'company', ?int $deptId = null): void
     {
@@ -425,6 +431,71 @@ class Show extends Component
         $this->pluginsOpen = false;
     }
 
+    public function importPlugin(string $key): void
+    {
+        if (! array_key_exists($key, $this->pluginManifest())) {
+            return;
+        }
+
+        if (! in_array($key, $this->installedPlugins, true)) {
+            $this->installedPlugins[] = $key;
+        }
+
+        if ($key === 'attendance') {
+            $this->seedAttendance();
+        }
+
+        $this->pluginsOpen = false;
+        $this->activeTab = $key;
+    }
+
+    /** Available plugins the admin can import as tabs. */
+    public function pluginManifest(): array
+    {
+        return [
+            'attendance' => ['name' => 'Attendance', 'icon' => 'calendar', 'desc' => 'Log attendance and work hours.'],
+            'payroll' => ['name' => 'Payroll', 'icon' => 'briefcase', 'desc' => 'Run payroll and track compensation.'],
+            'tasks' => ['name' => 'Tasks', 'icon' => 'check', 'desc' => 'Assign and track team tasks.'],
+            'announcements' => ['name' => 'Announcements', 'icon' => 'bell', 'desc' => 'Broadcast company-wide notices.'],
+        ];
+    }
+
+    protected function seedAttendance(): void
+    {
+        $this->attendanceRecords = [
+            [
+                'name' => 'Maria Cristina Reyes', 'avatar' => null,
+                'date' => '2026-07-15', 'time' => '08:02 AM',
+                'location' => 'BDO Makati Branch', 'coordinate' => '14.5547, 121.0244',
+                'weather' => 'Partly cloudy', 'altitude' => '23 m',
+            ],
+            [
+                'name' => 'Juan Miguel Santos', 'avatar' => null,
+                'date' => '2026-07-15', 'time' => '08:11 AM',
+                'location' => 'BDO Taguig Hub', 'coordinate' => '14.5176, 121.0509',
+                'weather' => 'Sunny', 'altitude' => '41 m',
+            ],
+            [
+                'name' => 'Ana Marie Cruz', 'avatar' => null,
+                'date' => '2026-07-15', 'time' => '08:25 AM',
+                'location' => 'BDO Quezon Ave.', 'coordinate' => '14.6312, 121.0123',
+                'weather' => 'Light rain', 'altitude' => '58 m',
+            ],
+            [
+                'name' => 'Paolo Mendoza', 'avatar' => null,
+                'date' => '2026-07-14', 'time' => '05:48 PM',
+                'location' => 'BDO Ortigas Center', 'coordinate' => '14.5867, 121.0614',
+                'weather' => 'Clear', 'altitude' => '35 m',
+            ],
+            [
+                'name' => 'Carla Delos Reyes', 'avatar' => null,
+                'date' => '2026-07-14', 'time' => '06:02 PM',
+                'location' => 'BDO Alabang', 'coordinate' => '14.4267, 121.0250',
+                'weather' => 'Cloudy', 'altitude' => '12 m',
+            ],
+        ];
+    }
+
     public function createPost(): void
     {
         // TODO: persist as a company- or department-scoped post.
@@ -435,7 +506,7 @@ class Show extends Component
 
         if ($this->postScope === 'department' && $this->postDeptId !== null) {
             foreach ($this->departments as &$dept) {
-                if ($dept['id'] === $this->postDeptId) {
+                if ((int) $dept['id'] === (int) $this->postDeptId) {
                     $nextId = collect($dept['posts'] ?? [])->max('id') + 1;
                     $post = [
                         'id' => $nextId,
