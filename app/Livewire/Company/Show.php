@@ -30,6 +30,8 @@ class Show extends Component
     /** @var array<int, string> */
     public array $installedPlugins = [];
 
+    public ?string $fullscreenPlugin = null;
+
     /** @var array<int, array<string, mixed>> */
     public array $attendanceRecords = [];
 
@@ -429,6 +431,20 @@ class Show extends Component
     public function closePlugins(): void
     {
         $this->pluginsOpen = false;
+    }
+
+    public function expandPlugin(string $key): void
+    {
+        if (! in_array($key, $this->installedPlugins, true)) {
+            return;
+        }
+
+        $this->fullscreenPlugin = $key;
+    }
+
+    public function collapsePlugin(): void
+    {
+        $this->fullscreenPlugin = null;
     }
 
     public function importPlugin(string $key): void

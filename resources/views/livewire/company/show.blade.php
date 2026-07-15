@@ -318,38 +318,18 @@
                     @endif
                 @elseif ($activeTab === 'attendance')
                     <x-card class="p-5">
-                        <h3 class="text-sm font-semibold text-gray-900">Attendance</h3>
-                        <p class="mt-1 text-sm text-gray-500">Manage attendance · preview</p>
-
-                        <div class="mt-4 max-h-[70vh] overflow-auto rounded-xl border border-gray-200">
-                            <table class="w-full border-collapse text-left text-sm">
-                                <thead class="sticky top-0 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                    <tr>
-                                        <th class="px-4 py-2.5">Photo</th>
-                                        <th class="px-4 py-2.5">Date</th>
-                                        <th class="px-4 py-2.5">Time</th>
-                                        <th class="px-4 py-2.5">Location</th>
-                                        <th class="px-4 py-2.5">Coordinate</th>
-                                        <th class="px-4 py-2.5">Weather</th>
-                                        <th class="px-4 py-2.5">Altitude</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @foreach ($attendanceRecords as $rec)
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-2.5">
-                                                <x-avatar :src="$rec['avatar'] ?? null" :name="$rec['name']" size="sm" />
-                                            </td>
-                                            <td class="whitespace-nowrap px-4 py-2.5 font-medium text-gray-800">{{ $rec['date'] }}</td>
-                                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ $rec['time'] }}</td>
-                                            <td class="px-4 py-2.5 text-gray-600">{{ $rec['location'] }}</td>
-                                            <td class="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500">{{ $rec['coordinate'] }}</td>
-                                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ $rec['weather'] }}</td>
-                                            <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ $rec['altitude'] }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900">Attendance</h3>
+                                <p class="mt-1 text-sm text-gray-500">Manage attendance · preview</p>
+                            </div>
+                            <button wire:click="expandPlugin('attendance')" type="button" title="Expand"
+                                    class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-50">
+                                <x-icon name="expand" class="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div class="mt-4 max-h-[70vh]">
+                            @include('livewire.company.partials.attendance-table')
                         </div>
                     </x-card>
                 @elseif (in_array($activeTab, $installedPlugins, true))
@@ -588,6 +568,29 @@
                         @endforeach
                     </div>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Fullscreen plugin view --}}
+    @if ($fullscreenPlugin)
+        <div class="fixed inset-0 z-[60] flex flex-col bg-white" wire:key="fullscreen-plugin">
+            <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+                <div class="min-w-0">
+                    <h3 class="text-base font-bold text-gray-900">{{ ($this->pluginManifest())[$fullscreenPlugin]['name'] ?? 'Plugin' }}</h3>
+                    <p class="truncate text-xs text-gray-500">{{ ($this->pluginManifest())[$fullscreenPlugin]['desc'] ?? '' }}</p>
+                </div>
+                <button wire:click="collapsePlugin" type="button" title="Exit fullscreen"
+                        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-50">
+                    <x-icon name="x" class="h-5 w-5" />
+                </button>
+            </div>
+            <div class="flex-1 overflow-auto p-5">
+                @if ($fullscreenPlugin === 'attendance')
+                    @include('livewire.company.partials.attendance-table')
+                @else
+                    <p class="text-sm text-gray-400">This plugin is installed. Content is coming soon.</p>
+                @endif
             </div>
         </div>
     @endif
