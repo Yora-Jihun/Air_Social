@@ -35,6 +35,17 @@ class Show extends Component
     /** @var array<int, array<string, mixed>> */
     public array $attendanceRecords = [];
 
+    public ?string $attendanceHistoryEmployee = null;
+
+    public string $attendanceHistoryRange = '7'; // 7 | 15 | 30 | 365
+
+    /** @var array<int, array<string, mixed>> */
+    public array $payrollRecords = [];
+
+    public ?int $payslipIndex = null;
+
+    public bool $showGeneratedPayslip = false;
+
     /** @var array<string, mixed>|null */
     public ?array $selectedMember = null;
 
@@ -461,6 +472,10 @@ class Show extends Component
             $this->seedAttendance();
         }
 
+        if ($key === 'payroll') {
+            $this->seedPayroll();
+        }
+
         $this->pluginsOpen = false;
         $this->activeTab = $key;
     }
@@ -510,6 +525,389 @@ class Show extends Component
                 'weather' => 'Cloudy', 'altitude' => '12 m',
             ],
         ];
+    }
+
+    // --- Attendance history modal (static, view-only) ---
+
+    public function viewAttendanceHistory(string $name): void
+    {
+        $this->attendanceHistoryEmployee = $name;
+        $this->attendanceHistoryRange = '7';
+    }
+
+    public function setAttendanceHistoryRange(string $range): void
+    {
+        if (! array_key_exists($range, $this->attendanceHistoryRangeOptions())) {
+            return;
+        }
+
+        $this->attendanceHistoryRange = $range;
+    }
+
+    public function closeAttendanceHistory(): void
+    {
+        $this->attendanceHistoryEmployee = null;
+    }
+
+    /** Range key => label shown on the tabs. */
+    public function attendanceHistoryRangeOptions(): array
+    {
+        return [
+            '7' => 'Last 7 days',
+            '15' => 'Last 15 days',
+            '30' => 'Last month',
+            '365' => 'All time',
+        ];
+    }
+
+    /** Status key => label/color meta shared by the summary tiles, donut and day-strip. */
+    public function attendanceStatusMeta(): array
+    {
+        return [
+            'present' => ['label' => 'Present', 'dot' => 'bg-emerald-500', 'text' => 'text-emerald-700', 'chip' => 'bg-emerald-50 text-emerald-700', 'hex' => '#10b981'],
+            'absent' => ['label' => 'Absent', 'dot' => 'bg-rose-500', 'text' => 'text-rose-700', 'chip' => 'bg-rose-50 text-rose-700', 'hex' => '#f43f5e'],
+            'sick' => ['label' => 'Sick leave', 'dot' => 'bg-amber-500', 'text' => 'text-amber-700', 'chip' => 'bg-amber-50 text-amber-700', 'hex' => '#f59e0b'],
+            'vacation' => ['label' => 'Vacation leave', 'dot' => 'bg-violet-500', 'text' => 'text-violet-700', 'chip' => 'bg-violet-50 text-violet-700', 'hex' => '#8b5cf6'],
+        ];
+    }
+
+    /** Badge colors for the "late" flag — separate from status since a day is Present *and* late, not either/or. */
+    public function attendanceLateMeta(): array
+    {
+        return ['dot' => 'bg-orange-500', 'text' => 'text-orange-700', 'chip' => 'bg-orange-50 text-orange-700'];
+    }
+
+    /** Badge colors for PH holidays — shown in both the Attendance history modal and Payroll. */
+    public function attendanceHolidayMeta(): array
+    {
+        return [
+            'regular' => ['label' => 'Regular holiday', 'dot' => 'bg-yellow-500', 'text' => 'text-yellow-700', 'chip' => 'bg-yellow-50 text-yellow-700'],
+            'special' => ['label' => 'Special holiday', 'dot' => 'bg-cyan-500', 'text' => 'text-cyan-700', 'chip' => 'bg-cyan-50 text-cyan-700'],
+        ];
+    }
+
+    /**
+     * Approximate PH public holiday calendar (regular vs. special non-working) covering the window the
+     * attendance/payroll demo data spans. Regular holidays pay double when worked, and still pay 100% when
+     * unworked (unless absent). Special non-working holidays pay 130% when worked, otherwise no work no pay.
+     */
+    protected const PH_HOLIDAYS = [
+        '2025-08-21' => ['name' => 'Ninoy Aquino Day', 'type' => 'special'],
+        '2025-08-25' => ['name' => 'National Heroes Day', 'type' => 'regular'],
+        '2025-11-01' => ['name' => "All Saints' Day", 'type' => 'special'],
+        '2025-11-30' => ['name' => 'Bonifacio Day', 'type' => 'regular'],
+        '2025-12-08' => ['name' => 'Immaculate Conception', 'type' => 'special'],
+        '2025-12-24' => ['name' => 'Christmas Eve', 'type' => 'special'],
+        '2025-12-25' => ['name' => 'Christmas Day', 'type' => 'regular'],
+        '2025-12-30' => ['name' => 'Rizal Day', 'type' => 'regular'],
+        '2025-12-31' => ['name' => 'Last Day of the Year', 'type' => 'special'],
+        '2026-01-01' => ['name' => "New Year's Day", 'type' => 'regular'],
+        '2026-02-17' => ['name' => 'Chinese New Year', 'type' => 'special'],
+        '2026-02-25' => ['name' => 'EDSA People Power Anniversary', 'type' => 'special'],
+        '2026-04-02' => ['name' => 'Maundy Thursday', 'type' => 'regular'],
+        '2026-04-03' => ['name' => 'Good Friday', 'type' => 'regular'],
+        '2026-04-04' => ['name' => 'Black Saturday', 'type' => 'special'],
+        '2026-04-09' => ['name' => 'Araw ng Kagitingan', 'type' => 'regular'],
+        '2026-05-01' => ['name' => 'Labor Day', 'type' => 'regular'],
+        '2026-06-12' => ['name' => 'Independence Day', 'type' => 'regular'],
+    ];
+
+    /** Minutes short of a full 10-hour shift, formatted like "1h 30m late" / "45m late". */
+    public function formatLateDuration(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+
+        if ($hours > 0 && $mins > 0) {
+            return "{$hours}h {$mins}m late";
+        }
+
+        if ($hours > 0) {
+            return "{$hours}h late";
+        }
+
+        return "{$mins}m late";
+    }
+
+    /** @return array<int, array<string, mixed>> Deterministic per-employee daily attendance, oldest to newest. */
+    public function attendanceHistoryDays(): array
+    {
+        if (! $this->attendanceHistoryEmployee) {
+            return [];
+        }
+
+        return $this->buildAttendanceHistory($this->attendanceHistoryEmployee, (int) $this->attendanceHistoryRange);
+    }
+
+    /** A full shift is 8 logged hours; anything less is flagged "late" by the shortfall. */
+    protected const FULL_SHIFT_HOURS = 8.0;
+
+    protected function buildAttendanceHistory(string $name, int $days): array
+    {
+        $today = \Carbon\Carbon::parse('2026-07-18');
+        $history = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $history[] = $this->attendanceDayRecord($name, $today->copy()->subDays($i));
+        }
+
+        return $history;
+    }
+
+    /**
+     * Deterministic single-day attendance roll for one employee — the shared source of truth for both the
+     * Attendance history modal and the Payroll calculator, so a given employee+date always resolves the same way.
+     */
+    protected function attendanceDayRecord(string $name, \Carbon\Carbon $date): array
+    {
+        $dateKey = $date->format('Y-m-d');
+        $holiday = self::PH_HOLIDAYS[$dateKey] ?? null;
+
+        $base = [
+            'date' => $dateKey, 'day' => $date->format('D'),
+            'holiday_name' => $holiday['name'] ?? null,
+            'holiday_type' => $holiday['type'] ?? null,
+        ];
+
+        if ($date->isWeekend()) {
+            return $base + [
+                'status' => 'weekend', 'time_in' => null, 'time_out' => null, 'hours' => 0,
+                'location' => null, 'weather' => null, 'altitude' => null, 'late_minutes' => null,
+            ];
+        }
+
+        // Weights sum to 100; seeded on name+date so the same day always rolls the same way.
+        $weights = ['present' => 82, 'absent' => 6, 'sick' => 6, 'vacation' => 6];
+        $locations = ['BDO Makati Branch', 'BDO Taguig Hub', 'BDO Quezon Ave.', 'BDO Ortigas Center', 'BDO Alabang'];
+        $weathers = ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain', 'Clear'];
+
+        mt_srand(crc32($name.$dateKey));
+        $roll = mt_rand(1, 100);
+
+        $status = 'present';
+        $cumulative = 0;
+        foreach ($weights as $key => $weight) {
+            $cumulative += $weight;
+            if ($roll <= $cumulative) {
+                $status = $key;
+                break;
+            }
+        }
+
+        $onSite = $status === 'present';
+        // Wide enough spread either side of the 8h threshold that "present" and "late" don't always coincide.
+        $hours = $onSite ? round(mt_rand(65, 98) / 10, 1) : 0;
+
+        return $base + [
+            'status' => $status,
+            'time_in' => $onSite ? sprintf('%02d:%02d AM', mt_rand(7, 8), mt_rand(0, 59)) : null,
+            'time_out' => $onSite ? sprintf('%02d:%02d PM', mt_rand(5, 6), mt_rand(0, 59)) : null,
+            'hours' => $hours,
+            'location' => $onSite ? $locations[mt_rand(0, count($locations) - 1)] : null,
+            'weather' => $onSite ? $weathers[mt_rand(0, count($weathers) - 1)] : null,
+            'altitude' => $onSite ? mt_rand(10, 60).' m' : null,
+            'late_minutes' => $onSite && $hours < self::FULL_SHIFT_HOURS
+                ? (int) round((self::FULL_SHIFT_HOURS - $hours) * 60)
+                : null,
+        ];
+    }
+
+    // Semi-monthly pay period the payroll demo runs — Jun 1-15, 2026 was picked because it contains a real
+    // PH regular holiday (Independence Day, Jun 12), so the double-pay rule actually has something to show.
+    protected const PAYROLL_PERIOD_START = '2026-06-01';
+
+    protected const PAYROLL_PERIOD_END = '2026-06-15';
+
+    protected const PAYROLL_PAY_DATE = '2026-06-16';
+
+    // Approximate 2026 NCR-area daily rates for a security agency's rank-and-file/supervisory roles.
+    protected const POSITION_DAILY_RATE = [
+        'Security Guard' => 650.0,
+        'Security Officer' => 750.0,
+        'Operation In Charge' => 950.0,
+        'Area Operation Manager' => 1500.0,
+    ];
+
+    public function payrollPeriodLabel(): string
+    {
+        return 'Jun 1 - Jun 15, 2026';
+    }
+
+    protected function seedPayroll(): void
+    {
+        $employees = [
+            ['name' => 'Maria Cristina Reyes', 'avatar' => null, 'employee_id' => 'BDO-004821', 'position' => 'Security Guard'],
+            ['name' => 'Juan Miguel Santos', 'avatar' => null, 'employee_id' => 'BDO-006042', 'position' => 'Operation In Charge'],
+            ['name' => 'Ana Marie Cruz', 'avatar' => null, 'employee_id' => 'BDO-005133', 'position' => 'Area Operation Manager'],
+            ['name' => 'Paolo Mendoza', 'avatar' => null, 'employee_id' => 'BDO-007115', 'position' => 'Security Officer'],
+            ['name' => 'Carla Delos Reyes', 'avatar' => null, 'employee_id' => 'BDO-008270', 'position' => 'Security Guard'],
+        ];
+
+        $this->payrollRecords = array_map(fn (array $employee) => $this->computePayroll($employee), $employees);
+    }
+
+    /**
+     * Runs one employee's attendance for the pay period through PH payroll rules: no-work-no-pay for absences
+     * and leave, a per-minute deduction for lateness, 1.25x OT beyond 8h, and PH holiday-pay multipliers
+     * (200% worked / 100% unworked-but-not-absent on regular holidays, 130% worked on special holidays).
+     */
+    protected function computePayroll(array $employee): array
+    {
+        $dailyRate = self::POSITION_DAILY_RATE[$employee['position']] ?? 650.0;
+        $hourlyRate = $dailyRate / 8;
+        $minuteRate = $hourlyRate / 60;
+
+        $basicPay = 0.0;
+        $holidayPay = 0.0;
+        $overtimePay = 0.0;
+        $lateDeduction = 0.0;
+        $daysPresent = 0;
+        $daysAbsent = 0;
+        $daysLeave = 0;
+        $daysLate = 0;
+        $holidaysWorked = [];
+
+        $start = \Carbon\Carbon::parse(self::PAYROLL_PERIOD_START);
+        $end = \Carbon\Carbon::parse(self::PAYROLL_PERIOD_END);
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            $day = $this->attendanceDayRecord($employee['name'], $date);
+            $isRegularHoliday = $day['holiday_type'] === 'regular';
+            $isSpecialHoliday = $day['holiday_type'] === 'special';
+
+            if ($day['status'] === 'present') {
+                $daysPresent++;
+                $basicPay += $dailyRate;
+
+                if ($day['hours'] > 8) {
+                    $overtimePay += ($day['hours'] - 8) * $hourlyRate * 1.25;
+                }
+
+                if ($day['late_minutes']) {
+                    $lateDeduction += $day['late_minutes'] * $minuteRate;
+                    $daysLate++;
+                }
+
+                if ($isRegularHoliday) {
+                    $holidayPay += $dailyRate; // worked regular holiday: base + this premium = 200%
+                    $holidaysWorked[] = $day['holiday_name'];
+                } elseif ($isSpecialHoliday) {
+                    $holidayPay += $dailyRate * 0.3; // worked special holiday: base + this premium = 130%
+                    $holidaysWorked[] = $day['holiday_name'];
+                }
+            } elseif ($day['status'] === 'absent') {
+                $daysAbsent++; // no work, no pay — forfeits any holiday pay too
+            } else {
+                $daysLeave++; // sick/vacation leave: unpaid, except a regular holiday still pays statutory 100%
+
+                if ($isRegularHoliday) {
+                    $holidayPay += $dailyRate;
+                }
+            }
+        }
+
+        $grossPay = $basicPay + $holidayPay + $overtimePay - $lateDeduction;
+        $sss = $this->calculateSss($grossPay);
+        $philhealth = $this->calculatePhilhealth($grossPay);
+        $pagibig = $this->calculatePagibig($grossPay);
+        $tax = $this->calculateWithholdingTax(max(0, $grossPay - $sss - $philhealth - $pagibig));
+
+        return $employee + [
+            'daily_rate' => $dailyRate,
+            'base_pay' => round($basicPay, 2),
+            'holiday_pay' => round($holidayPay, 2),
+            'overtime' => round($overtimePay, 2),
+            'late_deduction' => round($lateDeduction, 2),
+            'gross_pay' => round($grossPay, 2),
+            'days_present' => $daysPresent,
+            'days_absent' => $daysAbsent,
+            'days_leave' => $daysLeave,
+            'days_late' => $daysLate,
+            'holidays_worked' => array_values(array_unique(array_filter($holidaysWorked))),
+            'deductions' => ['sss' => $sss, 'philhealth' => $philhealth, 'pagibig' => $pagibig, 'tax' => $tax],
+            'net_pay' => round($grossPay - $sss - $philhealth - $pagibig - $tax, 2),
+            'status' => 'pending',
+            'pay_date' => self::PAYROLL_PAY_DATE,
+        ];
+    }
+
+    /** 2025 SSS table, simplified to its 4.5% employee-share formula over a ₱500-bracketed, ₱5,000-35,000 salary credit. */
+    protected function calculateSss(float $grossPay): float
+    {
+        $msc = max(5000, min(35000, floor($grossPay / 500) * 500));
+
+        return round($msc * 0.045, 2);
+    }
+
+    /** 2025 PhilHealth: 5% of monthly basic salary split employer/employee (2.5% each), ₱10,000-100,000 income band. */
+    protected function calculatePhilhealth(float $grossPay): float
+    {
+        $base = max(10000, min(100000, $grossPay));
+
+        return round($base * 0.025, 2);
+    }
+
+    /** Pag-IBIG: employee share is 2% of monthly compensation, capped at a ₱10,000 contribution base (max ₱200). */
+    protected function calculatePagibig(float $grossPay): float
+    {
+        return round(min($grossPay, 10000) * 0.02, 2);
+    }
+
+    /** BIR TRAIN-law semi-monthly withholding tax table (effective 2023 onward). */
+    protected function calculateWithholdingTax(float $taxable): float
+    {
+        $tax = match (true) {
+            $taxable <= 10416 => 0.0,
+            $taxable <= 16666 => ($taxable - 10417) * 0.15,
+            $taxable <= 33332 => 937.50 + ($taxable - 16667) * 0.20,
+            $taxable <= 83332 => 4270.70 + ($taxable - 33333) * 0.25,
+            $taxable <= 333332 => 16770.70 + ($taxable - 83333) * 0.30,
+            $taxable <= 583332 => 91770.70 + ($taxable - 333333) * 0.32,
+            default => 200770.70 + ($taxable - 583333) * 0.35,
+        };
+
+        return round(max(0, $tax), 2);
+    }
+
+    public function runPayroll(): void
+    {
+        foreach ($this->payrollRecords as &$rec) {
+            $rec['status'] = 'paid';
+        }
+        unset($rec);
+    }
+
+    // --- Payroll breakdown / payslip modal (static, view-only) ---
+
+    public function viewPayslip(int $index): void
+    {
+        if (! isset($this->payrollRecords[$index])) {
+            return;
+        }
+
+        $this->payslipIndex = $index;
+        $this->showGeneratedPayslip = false;
+    }
+
+    public function closePayslip(): void
+    {
+        $this->payslipIndex = null;
+        $this->showGeneratedPayslip = false;
+    }
+
+    public function generatePayslip(): void
+    {
+        // TODO: replace with a real payslip render/PDF export once payroll has a backend.
+        $this->showGeneratedPayslip = true;
+    }
+
+    public function backToPayslipBreakdown(): void
+    {
+        $this->showGeneratedPayslip = false;
     }
 
     public function createPost(): void

@@ -15,10 +15,11 @@
             @foreach ($attendanceRecords as $rec)
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-2.5">
-                        <div class="flex items-center gap-3">
+                        <button wire:click="viewAttendanceHistory('{{ $rec['name'] }}')" type="button"
+                                class="flex items-center gap-3 rounded-lg text-left transition hover:text-blue-600">
                             <x-avatar :src="$rec['avatar'] ?? null" :name="$rec['name']" size="sm" />
-                            <span class="text-sm font-medium text-gray-800">{{ $rec['name'] }}</span>
-                        </div>
+                            <span class="text-sm font-medium text-gray-800 hover:text-blue-600">{{ $rec['name'] }}</span>
+                        </button>
                     </td>
                     <td class="whitespace-nowrap px-4 py-2.5 font-medium text-gray-800">{{ $rec['date'] }}</td>
                     <td class="whitespace-nowrap px-4 py-2.5 text-gray-600">{{ $rec['time'] }}</td>

@@ -332,6 +332,22 @@
                             @include('livewire.company.partials.attendance-table')
                         </div>
                     </x-card>
+                @elseif ($activeTab === 'payroll')
+                    <x-card class="p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900">Payroll</h3>
+                                <p class="mt-1 text-sm text-gray-500">Run payroll and track compensation · preview</p>
+                            </div>
+                            <button wire:click="expandPlugin('payroll')" type="button" title="Expand"
+                                    class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-50">
+                                <x-icon name="expand" class="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div class="mt-4 max-h-[70vh]">
+                            @include('livewire.company.partials.payroll-table')
+                        </div>
+                    </x-card>
                 @elseif (in_array($activeTab, $installedPlugins, true))
                     @php
                         $manifest = ($this->pluginManifest())[$activeTab] ?? null;
@@ -527,6 +543,579 @@
         </div>
     @endif
 
+    {{-- Payroll breakdown / payslip modal (static, view-only) --}}
+    @if ($payslipIndex !== null && isset($payrollRecords[$payslipIndex]))
+        @php
+            $payslip = $payrollRecords[$payslipIndex];
+            $gross = $payslip['gross_pay'];
+            $deductionsTotal = array_sum($payslip['deductions'] ?? []);
+        @endphp
+        <style>
+            @media print {
+                body * { visibility: hidden; }
+                #payslip-print, #payslip-print * { visibility: visible; }
+                #payslip-print { position: fixed; inset: 0; padding: 32px; }
+            }
+        </style>
+        <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4"
+             wire:click="closePayslip" wire:key="payslip-modal">
+            <div class="cp-modal w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" wire:click.stop>
+
+                @if (! $showGeneratedPayslip)
+                    {{-- Breakdown view --}}
+                    <div class="flex items-center gap-3 border-b border-gray-200 px-4 py-4">
+                        <x-avatar :src="$payslip['avatar'] ?? null" :name="$payslip['name']" size="lg" />
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-base font-bold text-gray-900">{{ $payslip['name'] }}</p>
+                            <p class="truncate text-sm text-gray-500">{{ $payslip['position'] }} · {{ $payslip['employee_id'] }}</p>
+                        </div>
+                        <button wire:click="closePayslip" type="button"
+                                class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div class="max-h-[70vh] space-y-4 overflow-y-auto px-4 py-4">
+                        <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                            <span>Pay period: <span class="font-medium text-gray-700">{{ $this->payrollPeriodLabel() }}</span></span>
+                            @if ($payslip['status'] === 'paid')
+                                <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Paid</span>
+                            @else
+                                <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Pending</span>
+                            @endif
+                        </div>
+
+                        {{-- Attendance summary this payroll run was computed from --}}
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                            <div class="rounded-lg border border-gray-200 p-2">
+                                <p class="text-[10px] text-gray-500">Present</p>
+                                <p class="mt-0.5 font-bold text-emerald-600">{{ $payslip['days_present'] }}</p>
+                            </div>
+                            <div class="rounded-lg border border-gray-200 p-2">
+                                <p class="text-[10px] text-gray-500">Absent</p>
+                                <p class="mt-0.5 font-bold text-rose-600">{{ $payslip['days_absent'] }}</p>
+                            </div>
+                            <div class="rounded-lg border border-gray-200 p-2">
+                                <p class="text-[10px] text-gray-500">Leave</p>
+                                <p class="mt-0.5 font-bold text-violet-600">{{ $payslip['days_leave'] }}</p>
+                            </div>
+                            <div class="rounded-lg border border-gray-200 p-2">
+                                <p class="text-[10px] text-gray-500">Late</p>
+                                <p class="mt-0.5 font-bold text-orange-600">{{ $payslip['days_late'] }}</p>
+                            </div>
+                        </div>
+                        @if (! empty($payslip['holidays_worked']))
+                            <p class="rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                                <span class="font-semibold">Worked on {{ implode(', ', $payslip['holidays_worked']) }}</span> — holiday pay applied.
+                            </p>
+                        @endif
+
+                        <div>
+                            <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Earnings</h4>
+                            <dl class="mt-2 divide-y divide-gray-100 rounded-xl border border-gray-200">
+                                <div class="flex justify-between px-3 py-2 text-sm">
+                                    <dt class="text-gray-500">Basic pay ({{ $payslip['days_present'] }} days × ₱{{ number_format($payslip['daily_rate'], 2) }})</dt>
+                                    <dd class="font-medium text-gray-800">₱{{ number_format($payslip['base_pay'], 2) }}</dd>
+                                </div>
+                                @if ($payslip['holiday_pay'] > 0)
+                                    <div class="flex justify-between px-3 py-2 text-sm">
+                                        <dt class="text-gray-500">Holiday pay premium</dt>
+                                        <dd class="font-medium text-gray-800">₱{{ number_format($payslip['holiday_pay'], 2) }}</dd>
+                                    </div>
+                                @endif
+                                <div class="flex justify-between px-3 py-2 text-sm">
+                                    <dt class="text-gray-500">Overtime pay</dt>
+                                    <dd class="font-medium text-gray-800">₱{{ number_format($payslip['overtime'], 2) }}</dd>
+                                </div>
+                                @if ($payslip['late_deduction'] > 0)
+                                    <div class="flex justify-between px-3 py-2 text-sm">
+                                        <dt class="text-gray-500">Late deduction ({{ $payslip['days_late'] }} day{{ $payslip['days_late'] === 1 ? '' : 's' }})</dt>
+                                        <dd class="font-medium text-orange-600">-₱{{ number_format($payslip['late_deduction'], 2) }}</dd>
+                                    </div>
+                                @endif
+                                <div class="flex justify-between bg-gray-50 px-3 py-2 text-sm">
+                                    <dt class="font-medium text-gray-600">Gross pay</dt>
+                                    <dd class="font-semibold text-gray-900">₱{{ number_format($gross, 2) }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Deductions</h4>
+                            <dl class="mt-2 divide-y divide-gray-100 rounded-xl border border-gray-200">
+                                <div class="flex justify-between px-3 py-2 text-sm">
+                                    <dt class="text-gray-500">SSS</dt>
+                                    <dd class="font-medium text-rose-600">-₱{{ number_format($payslip['deductions']['sss'] ?? 0, 2) }}</dd>
+                                </div>
+                                <div class="flex justify-between px-3 py-2 text-sm">
+                                    <dt class="text-gray-500">PhilHealth</dt>
+                                    <dd class="font-medium text-rose-600">-₱{{ number_format($payslip['deductions']['philhealth'] ?? 0, 2) }}</dd>
+                                </div>
+                                <div class="flex justify-between px-3 py-2 text-sm">
+                                    <dt class="text-gray-500">Pag-IBIG</dt>
+                                    <dd class="font-medium text-rose-600">-₱{{ number_format($payslip['deductions']['pagibig'] ?? 0, 2) }}</dd>
+                                </div>
+                                <div class="flex justify-between px-3 py-2 text-sm">
+                                    <dt class="text-gray-500">Withholding tax</dt>
+                                    <dd class="font-medium text-rose-600">-₱{{ number_format($payslip['deductions']['tax'] ?? 0, 2) }}</dd>
+                                </div>
+                                <div class="flex justify-between bg-gray-50 px-3 py-2 text-sm">
+                                    <dt class="font-medium text-gray-600">Total deductions</dt>
+                                    <dd class="font-semibold text-rose-600">-₱{{ number_format($deductionsTotal, 2) }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <div class="flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
+                            <span class="text-sm font-semibold text-blue-900">Net pay</span>
+                            <span class="text-lg font-bold text-blue-900">₱{{ number_format($payslip['net_pay'], 2) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t border-gray-100 px-4 py-3">
+                        <button wire:click="closePayslip" type="button"
+                                class="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                            Close
+                        </button>
+                        <button wire:click="generatePayslip" type="button"
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                            <x-icon name="briefcase" class="h-4 w-4" />
+                            Generate payslip
+                        </button>
+                    </div>
+                @else
+                    {{-- Generated payslip (printable) view --}}
+                    <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 print:hidden">
+                        <button wire:click="backToPayslipBreakdown" type="button"
+                                class="inline-flex items-center gap-1 text-sm font-medium text-gray-500 transition hover:text-gray-700">
+                            <x-icon name="chevron-down" class="h-4 w-4 rotate-90" />
+                            Back
+                        </button>
+                        <button wire:click="closePayslip" type="button"
+                                class="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div id="payslip-print" class="max-h-[75vh] overflow-y-auto px-6 py-6">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="text-base font-bold text-gray-900">{{ $company['name'] ?? 'Company' }}</p>
+                                <p class="text-xs text-gray-500">{{ $company['location'] ?? '' }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-semibold uppercase tracking-wide text-gray-700">Payslip</p>
+                                <p class="text-xs text-gray-500">{{ $this->payrollPeriodLabel() }}</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-gray-200 p-3 text-sm">
+                            <div>
+                                <p class="text-xs text-gray-400">Employee name</p>
+                                <p class="font-medium text-gray-800">{{ $payslip['name'] }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Employee ID</p>
+                                <p class="font-medium text-gray-800">{{ $payslip['employee_id'] }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Position</p>
+                                <p class="font-medium text-gray-800">{{ $payslip['position'] }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Pay date</p>
+                                <p class="font-medium text-gray-800">{{ $payslip['pay_date'] ?? '' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Days present / absent / leave</p>
+                                <p class="font-medium text-gray-800">{{ $payslip['days_present'] }} / {{ $payslip['days_absent'] }} / {{ $payslip['days_leave'] }}</p>
+                            </div>
+                            @if (! empty($payslip['holidays_worked']))
+                                <div>
+                                    <p class="text-xs text-gray-400">Holiday(s) worked</p>
+                                    <p class="font-medium text-gray-800">{{ implode(', ', $payslip['holidays_worked']) }}</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <table class="mt-4 w-full border-collapse text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-400">
+                                    <th class="py-2">Earnings</th>
+                                    <th class="py-2 text-right">Amount</th>
+                                    <th class="py-2 pl-6">Deductions</th>
+                                    <th class="py-2 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-1.5 text-gray-600">Basic pay</td>
+                                    <td class="py-1.5 text-right text-gray-800">₱{{ number_format($payslip['base_pay'], 2) }}</td>
+                                    <td class="py-1.5 pl-6 text-gray-600">SSS</td>
+                                    <td class="py-1.5 text-right text-gray-800">₱{{ number_format($payslip['deductions']['sss'] ?? 0, 2) }}</td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-1.5 text-gray-600">Holiday pay premium</td>
+                                    <td class="py-1.5 text-right text-gray-800">{{ $payslip['holiday_pay'] > 0 ? '₱'.number_format($payslip['holiday_pay'], 2) : '—' }}</td>
+                                    <td class="py-1.5 pl-6 text-gray-600">PhilHealth</td>
+                                    <td class="py-1.5 text-right text-gray-800">₱{{ number_format($payslip['deductions']['philhealth'] ?? 0, 2) }}</td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-1.5 text-gray-600">Overtime pay</td>
+                                    <td class="py-1.5 text-right text-gray-800">₱{{ number_format($payslip['overtime'], 2) }}</td>
+                                    <td class="py-1.5 pl-6 text-gray-600">Pag-IBIG</td>
+                                    <td class="py-1.5 text-right text-gray-800">₱{{ number_format($payslip['deductions']['pagibig'] ?? 0, 2) }}</td>
+                                </tr>
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-1.5 text-gray-600">Late deduction</td>
+                                    <td class="py-1.5 text-right text-orange-600">{{ $payslip['late_deduction'] > 0 ? '-₱'.number_format($payslip['late_deduction'], 2) : '—' }}</td>
+                                    <td class="py-1.5 pl-6 text-gray-600">Withholding tax</td>
+                                    <td class="py-1.5 text-right text-gray-800">₱{{ number_format($payslip['deductions']['tax'] ?? 0, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1.5 font-semibold text-gray-700">Gross pay</td>
+                                    <td class="py-1.5 text-right font-semibold text-gray-900">₱{{ number_format($gross, 2) }}</td>
+                                    <td class="py-1.5 pl-6 font-semibold text-gray-700">Total deductions</td>
+                                    <td class="py-1.5 text-right font-semibold text-rose-600">₱{{ number_format($deductionsTotal, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="mt-4 flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3">
+                            <span class="text-sm font-semibold text-blue-900">Net pay</span>
+                            <span class="text-lg font-bold text-blue-900">₱{{ number_format($payslip['net_pay'], 2) }}</span>
+                        </div>
+
+                        <div class="mt-8 grid grid-cols-2 gap-6 text-xs text-gray-500">
+                            <div>
+                                <div class="h-10 border-b border-gray-300"></div>
+                                <p class="mt-1">Prepared by</p>
+                            </div>
+                            <div>
+                                <div class="h-10 border-b border-gray-300"></div>
+                                <p class="mt-1">Approved by</p>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-center text-[11px] text-gray-400">This is a system-generated payslip for preview purposes.</p>
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t border-gray-100 px-4 py-3 print:hidden">
+                        <button wire:click="backToPayslipBreakdown" type="button"
+                                class="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                            Back
+                        </button>
+                        <button onclick="window.print()" type="button"
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                            <x-icon name="printer" class="h-4 w-4" />
+                            Print
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    {{-- Attendance history modal (static, view-only) --}}
+    @if ($attendanceHistoryEmployee)
+        @php
+            $historyDays = $this->attendanceHistoryDays();
+            $statusMeta = $this->attendanceStatusMeta();
+            $rangeOptions = $this->attendanceHistoryRangeOptions();
+            $workingDays = collect($historyDays)->filter(fn ($d) => $d['status'] !== 'weekend');
+            $statusCounts = $workingDays->countBy('status');
+            $totalWorking = $workingDays->count();
+            $attendanceRate = $totalWorking > 0 ? (int) round(($statusCounts->get('present', 0) / $totalWorking) * 100) : 0;
+
+            $gradientStops = [];
+            $cursor = 0;
+            foreach ($statusMeta as $statusKey => $meta) {
+                $count = $statusCounts->get($statusKey, 0);
+                if ($count <= 0) {
+                    continue;
+                }
+                $pct = $totalWorking > 0 ? ($count / $totalWorking) * 100 : 0;
+                $start = $cursor;
+                $cursor += $pct;
+                $gradientStops[] = "{$meta['hex']} {$start}% {$cursor}%";
+            }
+            $gradientCss = count($gradientStops) ? implode(', ', $gradientStops) : '#e5e7eb 0% 100%';
+
+            // Status totals, sorted highest to lowest — re-sorts automatically whenever the cutoff changes.
+            $sortedStatuses = collect($statusMeta)
+                ->map(fn ($meta, $statusKey) => $meta + ['key' => $statusKey, 'count' => $statusCounts->get($statusKey, 0)])
+                ->sortByDesc('count')
+                ->values();
+            $maxStatusCount = max(1, $sortedStatuses->max('count'));
+
+            // Per-day hours bar graph only makes sense for the shorter cutoffs; a year of bars is unreadable.
+            $showDailyBars = in_array($attendanceHistoryRange, ['7', '15', '30'], true);
+            $maxHours = max(8, collect($historyDays)->max('hours'));
+
+            // "Late" is a flag on top of Present (logged under a full 10h shift), not its own status.
+            $lateMeta = $this->attendanceLateMeta();
+            $lateDays = $workingDays->filter(fn ($d) => ! empty($d['late_minutes']));
+            $lateCount = $lateDays->count();
+
+            // PH holidays are a flag too — shown alongside status/late, same as in Payroll.
+            $holidayMeta = $this->attendanceHolidayMeta();
+        @endphp
+        <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4"
+             wire:click="closeAttendanceHistory" wire:key="attendance-history-modal">
+            <div class="cp-modal w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl" wire:click.stop>
+                <div class="flex items-center gap-3 border-b border-gray-200 px-4 py-4">
+                    <x-avatar :name="$attendanceHistoryEmployee" size="lg" />
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-base font-bold text-gray-900">{{ $attendanceHistoryEmployee }}</p>
+                        <p class="truncate text-sm text-gray-500">Attendance history</p>
+                    </div>
+                    <button wire:click="closeAttendanceHistory" type="button"
+                            class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200">
+                        <x-icon name="x" class="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div class="max-h-[75vh] space-y-5 overflow-y-auto px-4 py-4">
+                    {{-- Range tabs --}}
+                    <div class="flex flex-wrap gap-1.5 rounded-lg bg-gray-100 p-1">
+                        @foreach ($rangeOptions as $rangeKey => $rangeLabel)
+                            <button wire:click="setAttendanceHistoryRange('{{ $rangeKey }}')" type="button"
+                                    class="flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $attendanceHistoryRange === $rangeKey ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                {{ $rangeLabel }}
+                            </button>
+                        @endforeach
+                    </div>
+
+                    {{-- Summary tiles --}}
+                    <div class="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        <div class="rounded-xl border border-gray-200 p-2.5 text-center">
+                            <p class="text-[11px] text-gray-500">Rate</p>
+                            <p class="mt-0.5 text-base font-bold text-gray-900">{{ $attendanceRate }}%</p>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 p-2.5 text-center">
+                            <p class="text-[11px] text-gray-500">Late</p>
+                            <p class="mt-0.5 text-base font-bold {{ $lateMeta['text'] }}">{{ $lateCount }}</p>
+                        </div>
+                        @foreach ($statusMeta as $statusKey => $meta)
+                            <div class="rounded-xl border border-gray-200 p-2.5 text-center">
+                                <p class="text-[11px] text-gray-500">{{ $meta['label'] }}</p>
+                                <p class="mt-0.5 text-base font-bold {{ $meta['text'] }}">{{ $statusCounts->get($statusKey, 0) }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Donut chart + legend --}}
+                    <div class="flex flex-col items-center gap-4 rounded-xl border border-gray-200 p-4 sm:flex-row">
+                        <div class="h-32 w-32 shrink-0 rounded-full" style="background: conic-gradient({{ $gradientCss }});">
+                            <div class="relative left-1/2 top-1/2 grid h-20 w-20 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white text-center shadow-inner">
+                                <div>
+                                    <p class="text-lg font-bold text-gray-900">{{ $attendanceRate }}%</p>
+                                    <p class="text-[10px] text-gray-400">present</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 space-y-2">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Breakdown · sorted by cutoff</p>
+                            @foreach ($sortedStatuses as $meta)
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="w-28 shrink-0 truncate text-gray-600">{{ $meta['label'] }}</span>
+                                    <span class="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                                        <span class="block h-full rounded-full {{ $meta['dot'] }}" style="width: {{ ($meta['count'] / $maxStatusCount) * 100 }}%"></span>
+                                    </span>
+                                    <span class="w-14 shrink-0 text-right font-semibold text-gray-800">
+                                        {{ $meta['count'] }}
+                                        <span class="font-normal text-gray-400">({{ $totalWorking > 0 ? round(($meta['count'] / $totalWorking) * 100) : 0 }}%)</span>
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Daily hours bar graph (7 / 15 / 30 day cutoffs only) --}}
+                    @if ($showDailyBars)
+                        @php
+                            $gridLines = [$maxHours, round($maxHours / 2, 1), 0];
+                        @endphp
+                        <div>
+                            <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Hours per day</h4>
+                            <div class="mt-2 rounded-xl border border-gray-200 bg-gray-50/40 p-4">
+                                {{-- Chart area: y-axis gridlines + bars, absolutely stacked --}}
+                                <div class="relative h-44">
+                                    <div class="absolute inset-0 flex flex-col justify-between">
+                                        @foreach ($gridLines as $line)
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-7 shrink-0 text-right text-[9px] text-gray-400">{{ $line }}h</span>
+                                                <span class="h-px flex-1 border-t border-dashed border-gray-200"></span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="absolute inset-0 flex items-end gap-1.5 pl-9">
+                                        @foreach ($historyDays as $day)
+                                            @php
+                                                $meta = $statusMeta[$day['status']] ?? null;
+                                                $barPx = $day['hours'] > 0 ? max(14, (int) round(($day['hours'] / $maxHours) * 152)) : 6;
+                                            @endphp
+                                            <div class="group relative flex min-w-0 flex-1 flex-col items-center">
+                                                {{-- Floating tooltip --}}
+                                                <div class="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-48 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl group-hover:block">
+                                                    <p class="flex items-center gap-1.5 font-semibold">
+                                                        <span class="h-2 w-2 shrink-0 rounded-full {{ $meta['dot'] ?? 'bg-gray-400' }}"></span>
+                                                        {{ \Carbon\Carbon::parse($day['date'])->format('M j, Y (D)') }}
+                                                    </p>
+                                                    <p class="mt-0.5 text-gray-300">
+                                                        {{ $meta['label'] ?? 'Weekend' }}@if ($day['hours'] > 0) · {{ $day['hours'] }}h logged @endif
+                                                    </p>
+                                                    @if ($day['time_in'])
+                                                        <p class="mt-1 text-gray-300">{{ $day['time_in'] }} – {{ $day['time_out'] }}</p>
+                                                    @endif
+                                                    @if ($day['location'])
+                                                        <p class="mt-1 text-gray-300">{{ $day['location'] }}</p>
+                                                        <p class="text-gray-300">{{ $day['weather'] }} · {{ $day['altitude'] }}</p>
+                                                    @endif
+                                                    @if ($day['late_minutes'])
+                                                        <p class="mt-1 font-semibold text-orange-400">{{ $this->formatLateDuration($day['late_minutes']) }}</p>
+                                                    @endif
+                                                    @if ($day['holiday_name'])
+                                                        <p class="mt-1 font-semibold text-yellow-400">{{ $day['holiday_name'] }} ({{ $holidayMeta[$day['holiday_type']]['label'] ?? 'Holiday' }})</p>
+                                                    @endif
+                                                    <span class="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></span>
+                                                </div>
+
+                                                @if ($day['hours'] > 0)
+                                                    <span class="mb-1 flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                                                        {{ $day['hours'] }}h
+                                                        @if ($day['late_minutes'])
+                                                            <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                                                        @endif
+                                                    </span>
+                                                @endif
+                                                <div class="w-full max-w-[28px] rounded-t transition group-hover:brightness-110 {{ $meta['dot'] ?? 'bg-gray-200' }}"
+                                                     style="height: {{ $barPx }}px"></div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                {{-- x-axis date labels, aligned under the bars --}}
+                                <div class="mt-2 flex gap-1.5 pl-9">
+                                    @foreach ($historyDays as $day)
+                                        <span class="min-w-0 flex-1 text-center text-[9px] text-gray-400">{{ \Carbon\Carbon::parse($day['date'])->format('n/j') }}</span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Day-by-day strip --}}
+                    <div x-data="{ hovered: null }">
+                        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Daily breakdown</h4>
+                        <div class="mt-2 flex flex-wrap gap-1 rounded-xl border border-gray-200 p-3">
+                            @foreach ($historyDays as $day)
+                                @php
+                                    $meta = $statusMeta[$day['status']] ?? null;
+                                    $tooltip = [
+                                        'date' => \Carbon\Carbon::parse($day['date'])->format('M j, Y (D)'),
+                                        'status' => $meta['label'] ?? 'Weekend',
+                                        'dot' => $meta['dot'] ?? 'bg-gray-200',
+                                        'hours' => $day['hours'] > 0 ? $day['hours'].'h logged' : null,
+                                        'time_in' => $day['time_in'],
+                                        'time_out' => $day['time_out'],
+                                        'location' => $day['location'],
+                                        'weather' => $day['weather'],
+                                        'altitude' => $day['altitude'],
+                                        'late' => $day['late_minutes'] ? $this->formatLateDuration($day['late_minutes']) : null,
+                                        'holiday' => $day['holiday_name'] ? $day['holiday_name'].' ('.($holidayMeta[$day['holiday_type']]['label'] ?? 'Holiday').')' : null,
+                                    ];
+                                    $ringClass = match (true) {
+                                        $day['holiday_type'] === 'regular' => 'ring-2 ring-yellow-400 ring-offset-1',
+                                        $day['holiday_type'] === 'special' => 'ring-2 ring-cyan-400 ring-offset-1',
+                                        (bool) $day['late_minutes'] => 'ring-2 ring-orange-400 ring-offset-1',
+                                        default => '',
+                                    };
+                                @endphp
+                                <span class="h-4 w-4 shrink-0 cursor-default rounded-sm transition hover:scale-125 {{ $meta['dot'] ?? 'bg-gray-200' }} {{ $ringClass }}"
+                                      @mouseenter="hovered = {{ \Illuminate\Support\Js::from($tooltip) }}" @mouseleave="hovered = null"></span>
+                            @endforeach
+                        </div>
+
+                        {{-- Hover detail panel --}}
+                        <div class="mt-2 min-h-[38px] rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                            <template x-if="!hovered">
+                                <p class="text-gray-400">Hover a square to see that day's details.</p>
+                            </template>
+                            <template x-if="hovered">
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                    <span class="inline-flex items-center gap-1.5 font-semibold text-gray-800">
+                                        <span class="h-2 w-2 rounded-full" :class="hovered.dot"></span>
+                                        <span x-text="hovered.date"></span>
+                                        <span class="font-normal text-gray-400">·</span>
+                                        <span x-text="hovered.status"></span>
+                                    </span>
+                                    <span x-show="hovered.hours" class="text-gray-500" x-text="hovered.hours"></span>
+                                    <span x-show="hovered.time_in" class="text-gray-500">
+                                        <span x-text="hovered.time_in"></span> – <span x-text="hovered.time_out"></span>
+                                    </span>
+                                    <span x-show="hovered.location" class="text-gray-500" x-text="hovered.location"></span>
+                                    <span x-show="hovered.weather" class="text-gray-500" x-text="hovered.weather"></span>
+                                    <span x-show="hovered.altitude" class="text-gray-500" x-text="hovered.altitude"></span>
+                                    <span x-show="hovered.late" class="font-semibold text-orange-600" x-text="hovered.late"></span>
+                                    <span x-show="hovered.holiday" class="font-semibold text-yellow-700" x-text="hovered.holiday"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    {{-- Table --}}
+                    <div class="overflow-auto rounded-xl border border-gray-200">
+                        <table class="w-full border-collapse text-left text-sm">
+                            <thead class="sticky top-0 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                <tr>
+                                    <th class="px-3 py-2">Date</th>
+                                    <th class="px-3 py-2">Day</th>
+                                    <th class="px-3 py-2">Status</th>
+                                    <th class="px-3 py-2">Time in</th>
+                                    <th class="px-3 py-2">Time out</th>
+                                    <th class="px-3 py-2">Location</th>
+                                    <th class="px-3 py-2">Weather</th>
+                                    <th class="px-3 py-2">Altitude</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach (array_reverse($historyDays) as $day)
+                                    @php $meta = $statusMeta[$day['status']] ?? null; @endphp
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="whitespace-nowrap px-3 py-2 font-medium text-gray-800">{{ \Carbon\Carbon::parse($day['date'])->format('M j, Y') }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ $day['day'] }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2">
+                                            <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $meta['chip'] ?? 'bg-gray-100 text-gray-500' }}">
+                                                {{ $meta['label'] ?? 'Weekend' }}
+                                            </span>
+                                            @if ($day['late_minutes'])
+                                                <span class="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $lateMeta['chip'] }}">
+                                                    {{ $this->formatLateDuration($day['late_minutes']) }}
+                                                </span>
+                                            @endif
+                                            @if ($day['holiday_name'])
+                                                <span class="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $holidayMeta[$day['holiday_type']]['chip'] ?? 'bg-gray-100 text-gray-500' }}">
+                                                    {{ $day['holiday_name'] }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">{{ $day['time_in'] ?? '—' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">{{ $day['time_out'] ?? '—' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">{{ $day['location'] ?? '—' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">{{ $day['weather'] ?? '—' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">{{ $day['altitude'] ?? '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Plugins marketplace modal --}}
     @if ($pluginsOpen)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -588,6 +1177,8 @@
             <div class="flex-1 overflow-auto p-5">
                 @if ($fullscreenPlugin === 'attendance')
                     @include('livewire.company.partials.attendance-table')
+                @elseif ($fullscreenPlugin === 'payroll')
+                    @include('livewire.company.partials.payroll-table')
                 @else
                     <p class="text-sm text-gray-400">This plugin is installed. Content is coming soon.</p>
                 @endif
